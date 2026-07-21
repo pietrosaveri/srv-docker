@@ -13,3 +13,8 @@
         icon: glances.png
         href: http://mmserver:61208
         description: System monitoring
+        
+    - Filebrowser: 
+        icon: filebrowser.png
+        href: http://mmserver:8080
+        description: File Browers of entire server

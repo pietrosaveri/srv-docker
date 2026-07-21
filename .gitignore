@@ -1,0 +1,19 @@
+# Runtime data
+**/data/
+**/cache/
+**/logs/
+
+# Application databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary files
+*.tmp
+*.log
+
+# OS
+.DS_Store
+
+# Environment secrets
+.env

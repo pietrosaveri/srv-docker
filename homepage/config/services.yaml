@@ -1,0 +1,15 @@
+- Infrastructure:
+    - Homepage:
+        icon: homepage.png
+        href: http://mmserver:3000
+        description: Server dashboard
+
+    - Portainer:
+        icon: portainer.png
+        href: https://mmserver:9443
+        description: Docker management
+
+    - Glances:
+        icon: glances.png
+        href: http://mmserver:61208
+        description: System monitoring

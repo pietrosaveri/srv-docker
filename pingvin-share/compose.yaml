@@ -16,9 +16,9 @@ services:
       caddy_0: share.home.arpa
       caddy_0.tls: internal
       caddy_0.reverse_proxy: "{{upstreams 3000}}"
-    
-      # Public hostname (Let's Encrypt)
-      caddy_1: pietroserver.duckdns.org
+      
+      # Public access
+      caddy_1: share.pietroserver.duckdns.org
       caddy_1.reverse_proxy: "{{upstreams 3000}}"
 
     volumes:

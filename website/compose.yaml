@@ -1,0 +1,21 @@
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: website
+
+    restart: unless-stopped
+
+    volumes:
+      - ./site:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+
+    labels:
+      caddy: pietroserver.duckdns.org
+      caddy.reverse_proxy: "{{upstreams 80}}"
+
+    networks:
+      - homeserver
+
+networks:
+  homeserver:
+    external: true

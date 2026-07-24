@@ -29,7 +29,11 @@
         href: https://docmost.home.arpa
         description: Notion but free and light
 
+    - Website:
+        href: https://pietroserver.duckdns.org
+        description: Cool public Website
+
     - Upload Portal:
         icon: mdi-upload
-        href: https://upload.home.arpa
+        href: https://upload.home.arpa/admin
         description: Others send files to me

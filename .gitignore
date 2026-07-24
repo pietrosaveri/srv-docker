@@ -19,3 +19,9 @@
 .env
 adguard/conf/AdGuardHome.yaml
 caddy/config/
+
+# Upload Portal build artifacts
+upload-portal/frontend/node_modules/
+upload-portal/frontend/dist/
+upload-portal/backend/web/dist/*
+!upload-portal/backend/web/dist/.gitkeep

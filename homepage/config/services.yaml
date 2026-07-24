@@ -28,4 +28,8 @@
         icon: Docmost.png
         href: https://docmost.home.arpa
         description: Notion but free and light
-        
+
+    - Upload Portal:
+        icon: mdi-upload
+        href: https://upload.home.arpa
+        description: Others send files to me

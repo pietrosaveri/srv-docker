@@ -1,0 +1,36 @@
+services:
+  app:
+    build: .
+    container_name: upload-portal
+
+    restart: unless-stopped
+
+    security_opt:
+      - no-new-privileges:true
+
+    user: "1000:1000"
+
+    environment:
+      - TZ=Europe/Athens
+      - DATA_DIR=/data
+      - PUBLIC_BASE_URL=https://upload.pietroserver.duckdns.org
+
+    labels:
+      # Local hostname (internal CA)
+      caddy_0: upload.home.arpa
+      caddy_0.tls: internal
+      caddy_0.reverse_proxy: "{{upstreams 8080}}"
+
+      # Public access
+      caddy_1: upload.pietroserver.duckdns.org
+      caddy_1.reverse_proxy: "{{upstreams 8080}}"
+
+    volumes:
+      - ./data:/data
+
+    networks:
+      - homeserver
+
+networks:
+  homeserver:
+    external: true

@@ -11,18 +11,20 @@ export default function UploadRow({ upload, onDelete, formatBytes, formatDate })
 
   return (
     <tr>
-      <td>
+      <td className="td-thumb">
         {upload.thumbnail_status === "ready" ? (
           <img className="thumb" src={thumbUrl} alt="" />
         ) : (
           <div className="thumb">{iconFor(upload.mime)}</div>
         )}
       </td>
-      <td>{upload.relative_path}</td>
-      <td>{formatBytes(upload.size)}</td>
-      <td>{formatDate(upload.uploaded_at)}</td>
-      <td>
-        <div style={{ display: "flex", gap: 8 }}>
+      <td data-label="Name" className="td-name">
+        {upload.relative_path}
+      </td>
+      <td data-label="Size">{formatBytes(upload.size)}</td>
+      <td data-label="Uploaded">{formatDate(upload.uploaded_at)}</td>
+      <td className="td-actions">
+        <div className="row-actions">
           <a className="btn btn-small" href={`/api/admin/uploads/${upload.id}/download`}>
             Download
           </a>

@@ -245,6 +245,13 @@ label {
   color: var(--text-dim);
   font-size: 0.85rem;
   font-family: ui-monospace, monospace;
+  word-break: break-all;
+}
+
+/* keep the left half of a link row able to shrink so long content wraps
+   instead of pushing the action buttons off-screen */
+.link-item > div:first-child {
+  min-width: 0;
 }
 
 .link-actions {
@@ -383,4 +390,136 @@ table.uploads th {
 .status-message {
   color: var(--text-dim);
   margin-top: 24px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Phone layout                                                        */
+/* ------------------------------------------------------------------ */
+
+@media (max-width: 640px) {
+  .page {
+    padding: 24px 0 56px;
+  }
+
+  h1 {
+    font-size: 1.6rem;
+  }
+
+  /* Dashboard header: stack the title above full-width action buttons */
+  .section-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .section-header > div {
+    width: 100%;
+  }
+
+  .section-header > div .btn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  /* Link cards: content stacks above the actions, buttons go full width */
+  .link-item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .link-url-row {
+    flex-wrap: wrap;
+  }
+
+  .link-actions {
+    flex-wrap: wrap;
+  }
+
+  .link-actions .btn {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+
+  /* New-link modal: stack the paired fields */
+  .field-row {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .modal {
+    padding: 20px;
+  }
+
+  /* Recent uploads: turn the wide table into stacked cards */
+  table.uploads thead {
+    display: none;
+  }
+
+  table.uploads,
+  table.uploads tbody,
+  table.uploads tr,
+  table.uploads td {
+    display: block;
+    width: 100%;
+  }
+
+  table.uploads tr {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    margin-bottom: 12px;
+  }
+
+  table.uploads td {
+    border: none;
+    padding: 5px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    text-align: right;
+    word-break: break-word;
+  }
+
+  table.uploads td::before {
+    content: attr(data-label);
+    color: var(--text-dim);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    text-align: left;
+    flex-shrink: 0;
+  }
+
+  /* Thumbnail and action cells don't want a label or the space-between */
+  table.uploads td.td-thumb,
+  table.uploads td.td-actions {
+    justify-content: flex-start;
+  }
+
+  table.uploads td.td-thumb::before,
+  table.uploads td.td-actions::before {
+    content: none;
+  }
+
+  table.uploads td.td-thumb {
+    padding-bottom: 10px;
+  }
+
+  .row-actions {
+    width: 100%;
+  }
+
+  .row-actions .btn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .dropzone {
+    padding: 44px 16px;
+  }
+
+  .progress-bar {
+    width: 72px;
+  }
 }

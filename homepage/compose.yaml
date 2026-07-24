@@ -8,14 +8,16 @@ services:
     security_opt:
       - no-new-privileges:true
 
-    ports:
-      - "3000:3000"
+    labels:
+      caddy: homepage.home.arpa
+      caddy.tls: internal
+      caddy.reverse_proxy: "{{upstreams 3000}}"
 
     environment:
       PUID: 1000
       PGID: 1000
-      HOMEPAGE_ALLOWED_HOSTS: mmserver:3000,localhost:3000,127.0.0.1:3000
-      
+      HOMEPAGE_ALLOWED_HOSTS: mmserver:3005,homepage.home.arpa:3005,homepage.home.arpa,localhost:3000,127.0.0.1:3000
+
     volumes:
       - ./config:/app/config
       - /var/run/docker.sock:/var/run/docker.sock:ro

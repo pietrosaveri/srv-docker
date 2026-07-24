@@ -9,10 +9,7 @@ services:
       - no-new-privileges:true
 
     user: "1000:1000"
-
-    ports:
-      - "8080:80"
-
+    
     volumes:
       - /srv:/srv
       - ./database:/database
@@ -23,6 +20,11 @@ services:
 
     networks:
       - homeserver
+
+    labels:
+      caddy: files.home.arpa
+      caddy.tls: internal
+      caddy.reverse_proxy: "{{upstreams 80}}"
 
 networks:
   homeserver:

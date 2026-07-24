@@ -17,3 +17,5 @@
 
 # Environment secrets
 .env
+adguard/conf/AdGuardHome.yaml
+caddy/config/

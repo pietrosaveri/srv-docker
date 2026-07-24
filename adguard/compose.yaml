@@ -1,0 +1,28 @@
+services:
+  adguard:
+    image: adguard/adguardhome:latest
+    container_name: adguard
+
+    restart: unless-stopped
+
+    security_opt:
+      - no-new-privileges:true
+
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+
+    volumes:
+      - ./work:/opt/adguardhome/work
+      - ./conf:/opt/adguardhome/conf
+
+    networks:
+      - homeserver
+    labels:
+      caddy: adguard.home.arpa
+      caddy.tls: internal
+      caddy.reverse_proxy: "{{upstreams 3000}}"
+
+networks:
+  homeserver:
+    external: true

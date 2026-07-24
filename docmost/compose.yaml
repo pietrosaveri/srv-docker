@@ -1,0 +1,69 @@
+services:
+  app:
+    image: docmost/docmost:latest
+    container_name: docmost
+
+    restart: unless-stopped
+
+    depends_on:
+      - db
+      - redis
+
+    security_opt:
+      - no-new-privileges:true
+
+    env_file:
+      - .env
+
+    environment:
+      DATABASE_URL: postgresql://docmost:${POSTGRES_PASSWORD}@db:5432/docmost
+      REDIS_URL: redis://redis:6379
+
+    labels:
+      caddy: docmost.home.arpa
+      caddy.tls: internal
+      caddy.reverse_proxy: "{{upstreams 3000}}"
+
+    volumes:
+      - ./data/storage:/app/data/storage
+
+    networks:
+      - homeserver
+
+  db:
+    image: postgres:17
+    container_name: docmost-db
+
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+
+    networks:
+      - homeserver
+
+  redis:
+    image: redis:8
+    container_name: docmost-redis
+
+    restart: unless-stopped
+
+    command:
+      - redis-server
+      - --appendonly
+      - yes
+      - --maxmemory-policy
+      - noeviction
+
+    volumes:
+      - ./data/redis:/data
+
+    networks:
+      - homeserver
+
+networks:
+  homeserver:
+    external: true

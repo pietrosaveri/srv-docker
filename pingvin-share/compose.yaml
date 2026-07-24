@@ -1,0 +1,33 @@
+services:
+  app:
+    image: ghcr.io/smp46/pingvin-share-x
+    container_name: pingvin-share
+
+    restart: unless-stopped
+
+    security_opt:
+      - no-new-privileges:true
+
+    environment:
+      - TZ=Europe/Athens
+
+    labels:
+      # Local hostname (internal CA)
+      caddy_0: share.home.arpa
+      caddy_0.tls: internal
+      caddy_0.reverse_proxy: "{{upstreams 3000}}"
+    
+      # Public hostname (Let's Encrypt)
+      caddy_1: pietroserver.duckdns.org
+      caddy_1.reverse_proxy: "{{upstreams 3000}}"
+
+    volumes:
+      - ./data:/opt/app/backend/data
+      - ./config:/opt/app/backend/config
+
+    networks:
+      - homeserver
+
+networks:
+  homeserver:
+    external: true

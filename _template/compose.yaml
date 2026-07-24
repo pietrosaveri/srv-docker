@@ -1,0 +1,25 @@
+services:
+  app:
+    image: CHANGE_ME
+    container_name: CHANGE_ME
+
+    restart: unless-stopped
+
+    security_opt:
+      - no-new-privileges:true
+
+    labels:
+      caddy: CHANGE_ME.home.arpa
+      caddy.tls: internal
+      caddy.reverse_proxy: "{{upstreams PORT}}"
+
+    volumes:
+      - ./config:/config
+      - ./data:/data
+
+    networks:
+      - homeserver
+
+networks:
+  homeserver:
+    external: true

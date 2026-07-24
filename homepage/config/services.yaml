@@ -1,20 +1,31 @@
 - Infrastructure:
-    - Homepage:
-        icon: homepage.png
-        href: http://mmserver:3000
-        description: Server dashboard
-
     - Portainer:
         icon: portainer.png
-        href: https://mmserver:9443
+        href: https://portainer.home.arpa
         description: Docker management
 
     - Glances:
         icon: glances.png
-        href: http://mmserver:61208
+        href: https://glances.home.arpa
         description: System monitoring
-        
-    - Filebrowser: 
+
+    - File Browser:
         icon: filebrowser.png
-        href: http://mmserver:8080
-        description: File Browers of entire server
+        href: https://files.home.arpa
+        description: Browse server files
+
+    - AdGuard:
+        icon: adguard.png
+        href: https://adguard.home.arpa
+        description: DNS and ad blocking
+        
+    - PingvinShare:
+        icon: PingvinShare.png
+        href: https://share.home.arpa
+        description: Sharing is caring
+        
+    - Docmost:
+        icon: Docmost.png
+        href: https://docmost.home.arpa
+        description: Notion but free and light
+        

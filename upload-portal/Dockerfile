@@ -12,7 +12,7 @@ RUN apk add --no-cache git
 WORKDIR /app
 COPY backend/go.mod ./
 COPY backend/ .
-COPY --from=frontend /app/dist ./web/dist
+COPY --from=frontend /app/dist ./cmd/server/web/dist
 RUN go mod tidy && CGO_ENABLED=0 go build -o /out/upload-portal ./cmd/server
 
 # --- runtime ---

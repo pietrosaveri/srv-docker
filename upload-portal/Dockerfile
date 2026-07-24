@@ -7,7 +7,7 @@ COPY frontend/ .
 RUN npm run build
 
 # --- backend build ---
-FROM golang:1.23-alpine AS backend
+FROM golang:1.25-alpine AS backend
 RUN apk add --no-cache git
 WORKDIR /app
 COPY backend/go.mod ./

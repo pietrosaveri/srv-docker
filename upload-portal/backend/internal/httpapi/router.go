@@ -17,9 +17,12 @@ type Server struct {
 	Storage       *uploads.Storage
 	Static        fs.FS
 	PublicBaseURL string
+
+	linkLocks *linkLocker
 }
 
 func (s *Server) Routes() http.Handler {
+	s.linkLocks = newLinkLocker()
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /api/admin/status", s.handleAdminStatus)

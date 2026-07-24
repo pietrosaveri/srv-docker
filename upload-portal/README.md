@@ -10,8 +10,15 @@ Generate a link from the admin dashboard, send it to someone, they drag files
 - Public base for generated links: https://upload.pietroserver.duckdns.org/u/:token
 
 ## First run
-Open the admin URL — you'll be prompted to set an admin password before the
-dashboard unlocks. There's no default password.
+Before the first `docker compose up`, make sure `./data` is owned by the
+container's user (it runs as UID/GID 1000, not root) — otherwise it'll
+crash-loop with `mkdir /data/files: permission denied`:
+```
+mkdir -p data && sudo chown -R 1000:1000 data
+```
+
+Then open the admin URL — you'll be prompted to set an admin password before
+the dashboard unlocks. There's no default password.
 
 ## Ports
 8080 (internal, proxied by Caddy)

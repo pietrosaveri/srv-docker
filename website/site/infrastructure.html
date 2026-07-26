@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Infrastructure - Pietro's Server</title>
+
+<link rel="icon" href="img/favicon.ico" sizes="any">
+<link rel="icon" href="img/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+
+<link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/infra.css">
+
+</head>
+
+<body>
+
+<nav class="nav-bar">
+<div class="nav-inner">
+<a class="brand" href="index.html"><img class="logo" src="img/logo.png" alt=""> Pietro's Server</a>
+<div class="nav-links">
+<a class="nav-link" href="index.html">Home</a>
+<a class="nav-link active" href="infrastructure.html">Infrastructure</a>
+</div>
+</div>
+</nav>
+
+<header class="page-head">
+<div class="inner">
+<div>
+<h1 class="display-xl">Infrastructure</h1>
+<p class="body-md">Nine diagrams. Open one to pan, zoom, and click into it.</p>
+</div>
+</div>
+</header>
+
+<section class="band band-light">
+<div class="inner">
+
+<noscript><div class="callout" style="margin-bottom:var(--sp-3xl)">The diagram viewer needs JavaScript.</div></noscript>
+
+<div class="diagram-list" id="diagram-list"></div>
+
+<p class="caption list-hint">Diagrams render on demand. The first one takes a moment.</p>
+
+</div>
+</section>
+
+<div class="foot-wrap">
+<div class="foot">Running on a Late 2014 Mac mini.</div>
+</div>
+
+<!-- diagram viewer -->
+<div class="viewer" id="viewer" role="dialog" aria-modal="true" aria-labelledby="viewer-title" hidden>
+
+<div class="viewer-bar">
+<span id="viewer-title"></span>
+<div class="viewer-ctls">
+<button type="button" class="vbtn" id="zoom-out" aria-label="Zoom out">−</button>
+<span id="zoom-level">100%</span>
+<button type="button" class="vbtn" id="zoom-in" aria-label="Zoom in">+</button>
+<button type="button" class="vbtn" id="zoom-fit">Fit</button>
+<button type="button" class="vbtn close" id="viewer-close">Close</button>
+</div>
+</div>
+
+<div class="viewer-stage" id="stage">
+<div class="viewer-canvas" id="canvas"></div>
+<div id="viewer-status" hidden></div>
+<div id="viewer-hint"></div>
+
+<aside class="note-card" id="viewer-note" hidden>
+<div class="note-head">
+<span>Notes</span>
+<button type="button" class="note-toggle" id="note-toggle" aria-expanded="true" aria-label="Collapse notes">−</button>
+</div>
+<div class="note-body" id="viewer-note-body"></div>
+</aside>
+
+<aside class="node-info" id="node-info" hidden></aside>
+</div>
+
+</div>
+
+<script src="js/diagrams.js"></script>
+<script src="js/infra.js"></script>
+
+</body>
+</html>

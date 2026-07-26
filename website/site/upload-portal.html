@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Upload Portal - Pietro's Server</title>
+
+<link rel="icon" href="img/favicon.ico" sizes="any">
+<link rel="icon" href="img/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+
+<link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/style.css">
+
+</head>
+
+<body>
+
+<nav class="nav-bar">
+<div class="nav-inner">
+<a class="brand" href="index.html"><img class="logo" src="img/logo.png" alt=""> Pietro's Server</a>
+<div class="nav-links">
+<a class="nav-link active" href="index.html">Home</a>
+<a class="nav-link" href="infrastructure.html">Infrastructure</a>
+</div>
+</div>
+</nav>
+
+<header class="page-head">
+<div class="inner">
+<img class="logo-lg" src="img/logo.png" alt="">
+<div>
+<h1 class="display-xl">Upload Portal <span class="chip chip-red">Custom made</span></h1>
+<p class="body-md">A single Go binary that lets anyone drop files on me, and only me open the box they land in.</p>
+</div>
+</div>
+</header>
+
+<section class="band band-light">
+<div class="inner">
+
+<div class="section-head">
+<div class="eyebrow">Purpose</div>
+<h2 class="display-lg">The other direction.</h2>
+</div>
+
+<div class="prose">
+<p>Pingvin Share is <strong>me to others</strong>. This is the opposite: <strong>others to me</strong>. I generate a link from an admin dashboard, send it to someone, and they drag files, or a whole folder, onto a plain page. No account, no install, no login.</p>
+<p>I built it rather than reusing something because every inbound file-drop project I found bundled a full account system I didn't need for a single admin. It's one Go binary with the React frontend embedded via <code>go:embed</code>. No separate frontend container, no external database.</p>
+</div>
+
+</div>
+</section>
+
+<section class="band band-light">
+<div class="inner">
+
+<div class="section-head">
+<div class="eyebrow">Stack</div>
+<h2 class="display-lg">Five moving parts, one container.</h2>
+</div>
+
+<dl class="spec">
+<div class="spec-row"><dt>Backend</dt><dd>Go 1.25 · stdlib net/http router</dd></div>
+<div class="spec-row"><dt>Frontend</dt><dd>React + Vite, embedded into the binary</dd></div>
+<div class="spec-row"><dt>Database</dt><dd>SQLite · WAL, single connection</dd></div>
+<div class="spec-row"><dt>Thumbnails</dt><dd>Go image/draw · ffmpeg · poppler pdftoppm</dd></div>
+<div class="spec-row"><dt>Image</dt><dd>Multi-stage build to a single Alpine container</dd></div>
+</dl>
+
+</div>
+</section>
+
+<section class="band band-light">
+<div class="inner">
+
+<div class="section-head">
+<div class="eyebrow">Request flow</div>
+<h2 class="display-lg">Same ingress as everything else.</h2>
+<p class="body-md">Both the admin dashboard and every generated drop link are served by one container on port 8080. Caddy fronts it with two labels: a public host on Let's Encrypt, an internal host on Caddy's own CA.</p>
+</div>
+
+<div class="flow">
+<div class="flow-node">Browser<small>drag &amp; drop</small></div>
+<div class="flow-link"><span class="packet" style="animation-delay:0s"></span></div>
+<div class="flow-node">Caddy<small>reverse proxy · TLS</small></div>
+<div class="flow-link"><span class="packet" style="animation-delay:.7s"></span></div>
+<div class="flow-node">upload-portal<small>Go binary · :8080</small></div>
+<div class="flow-link"><span class="packet" style="animation-delay:1.4s"></span></div>
+<div class="flow-node">Storage<small>SQLite + files</small></div>
+</div>
+
+<dl class="spec">
+<div class="spec-row"><dt>/u/:token</dt><dd>Public drop page, no login, governed by the link's own rules</dd></div>
+<div class="spec-row"><dt>/admin</dt><dd>Dashboard, valid session cookie required</dd></div>
+</dl>
+
+</div>
+</section>
+
+<section class="band band-light">
+<div class="inner">
+
+<div class="section-head">
+<div class="eyebrow">Authentication</div>
+<h2 class="display-lg">No accounts. Two passwords, salted and stretched.</h2>
+<p class="body-md">One admin password, and optionally one per link. Both hash the same way: PBKDF2-HMAC-SHA256 with a random 16-byte salt and 210,000 iterations, compared in constant time so a slow comparison can't leak the answer one byte at a time.</p>
+</div>
+
+<div class="hash-diagram">
+<div class="hash-row">
+<div class="hash-box">password<small>user input</small></div>
+<div class="hash-plus">+</div>
+<div class="hash-box salt">salt<small>16 random bytes. Barenghi fiero?</small></div>
+</div>
+<div class="hash-down"></div>
+<div class="hash-box process">PBKDF2-HMAC-SHA256<small>210,000 iterations</small></div>
+<div class="hash-down"></div>
+<div class="hash-box">derived key<small>32 bytes, stored beside the salt in SQLite</small></div>
+</div>
+
+<pre class="code-block"><code>const (
+    pbkdf2Iterations = 210_000
+    pbkdf2KeyLen     = 32
+    saltLen          = 16
+)
+
+func hashPassword(password string, salt []byte) []byte {
+    return pbkdf2.Key([]byte(password), salt, pbkdf2Iterations, pbkdf2KeyLen, sha256.New)
+}
+
+candidate := hashPassword(password, salt)
+if subtle.ConstantTimeCompare(candidate, hash) != 1 {
+    return "", ErrWrongPassword
+}</code></pre>
+
+<div class="prose" style="margin-top:var(--sp-3xl)">
+<p>Plain SHA-256 is fast, which is exactly wrong for a password hash, since it lets anyone with a stolen database try billions of guesses a second. PBKDF2 re-runs it as an HMAC 210,000 times to make each guess expensive. The salt means two identical passwords never produce the same stored hash, which kills precomputed rainbow tables.</p>
+<p>A successful login doesn't hand back a JWT. It mints 32 random bytes, hex-encodes them, and stores that token server-side with a 30-day expiry. The browser only ever sees the token, as an <code>HttpOnly</code>, <code>Secure</code>, <code>SameSite=Lax</code> cookie. Logging out deletes the row. Attempts are rate-limited to five per minute per IP.</p>
+</div>
+
+</div>
+</section>
+
+<section class="band band-light">
+<div class="inner">
+
+<div class="section-head">
+<div class="eyebrow">Upload lifecycle</div>
+<h2 class="display-lg">Eight stages, from drop to preview.</h2>
+</div>
+
+<ol class="pipeline">
+
+<li class="pipeline-stage">
+<span class="stage-node" style="--i:0">1</span>
+<div>
+<div class="stage-head"><span class="stage-name">create link</span><span class="lane">admin</span></div>
+<p class="stage-detail">12-character token · expiry · file and size caps · optional password</p>
+</div>
+</li>
+
+<li class="pipeline-stage">
+<span class="stage-node" style="--i:1">2</span>
+<div>
+<div class="stage-head"><span class="stage-name">read link state</span><span class="lane">client</span></div>
+<p class="stage-detail"><code>GET /info</code> returns title, active, remaining. Never the hash.</p>
+</div>
+</li>
+
+<li class="pipeline-stage">
+<span class="stage-node" style="--i:2">3</span>
+<div>
+<div class="stage-head"><span class="stage-name">walk the drop</span><span class="lane">client</span></div>
+<p class="stage-detail">The WebKit entries API recurses folders, keeping relative paths intact</p>
+</div>
+</li>
+
+<li class="pipeline-stage">
+<span class="stage-node" style="--i:3">4</span>
+<div>
+<div class="stage-head"><span class="stage-name">queue transfers</span><span class="lane">client</span></div>
+<p class="stage-detail"><code>XMLHttpRequest</code>, not <code>fetch</code>. Only XHR reports progress. Three at a time.</p>
+</div>
+</li>
+
+<li class="pipeline-stage">
+<span class="stage-node" style="--i:4">5</span>
+<div>
+<div class="stage-head"><span class="stage-name">resolve path</span><span class="lane">server</span></div>
+<p class="stage-detail">Destination clamped inside the link's own directory, so traversal is refused</p>
+</div>
+</li>
+
+<li class="pipeline-stage">
+<span class="stage-node" style="--i:5">6</span>
+<div>
+<div class="stage-head"><span class="stage-name">stream to disk</span><span class="lane">server</span></div>
+<p class="stage-detail">MIME sniffed from the first 512 bytes · byte budget enforced mid-stream</p>
+</div>
+</li>
+
+<li class="pipeline-stage">
+<span class="stage-node" style="--i:6">7</span>
+<div>
+<div class="stage-head"><span class="stage-name">commit under lock</span><span class="lane">server</span></div>
+<p class="stage-detail">Re-check limits against live counts, then <code>INSERT</code></p>
+</div>
+</li>
+
+<li class="pipeline-stage">
+<span class="stage-node" style="--i:7">8</span>
+<div>
+<div class="stage-head"><span class="stage-name">render preview</span><span class="lane">worker</span></div>
+<p class="stage-detail">Goroutine renders a 400 px JPEG via image/draw, ffmpeg or pdftoppm</p>
+</div>
+</li>
+
+</ol>
+
+</div>
+</section>
+
+<section class="band band-light">
+<div class="inner">
+
+<div class="section-head">
+<div class="eyebrow">The race</div>
+<h2 class="display-lg">Why step seven needs a lock.</h2>
+<p class="body-md">Checking the limits before writing isn't enough. Three files landing at once each read the same pre-insert count, each see room under the cap, and all three commit, quietly blowing past a limit that was supposed to be hard. Classic time-of-check to time-of-use.</p>
+</div>
+
+<div class="mutex-diagram">
+<div class="mutex-lanes">
+<div class="mutex-lane"><span class="lane-label">upload A</span><span class="lane-track"><i style="--d:0s"></i></span></div>
+<div class="mutex-lane"><span class="lane-label">upload B</span><span class="lane-track"><i style="--d:1s"></i></span></div>
+<div class="mutex-lane"><span class="lane-label">upload C</span><span class="lane-track"><i style="--d:2s"></i></span></div>
+</div>
+<div class="mutex-gate">per-link mutex<small>one at a time</small></div>
+<div class="mutex-out">
+<span class="out-track"><i></i></span>
+<div class="mutex-sink">re-check → INSERT<small>serialized</small></div>
+</div>
+</div>
+
+<div class="callout">
+The fix is the narrow part of the funnel: <strong>the file is written first, then a per-link mutex serializes re-check-then-insert</strong>. Uploads to the same link queue at the gate instead of racing through it, and a file that no longer fits is deleted back off disk rather than recorded.
+</div>
+
+</div>
+</section>
+
+<div class="foot-wrap">
+<div class="foot">Running on a Late 2014 Mac mini.</div>
+</div>
+
+</body>
+</html>

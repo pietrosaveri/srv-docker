@@ -3,58 +3,223 @@
 <head>
 
 <meta charset="UTF-8">
-
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Pietro Server</title>
+<title>Pietro's Server</title>
 
+<link rel="icon" href="img/favicon.ico" sizes="any">
+<link rel="icon" href="img/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+
+<link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="css/style.css">
 
 </head>
 
 <body>
 
-<div class="container">
+<svg style="display:none">
 
-<h1>Pietro Server</h1>
+<symbol id="icon-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square" stroke-linejoin="miter">
+<polyline points="12,15 12,4"/><polyline points="7,9 12,4 17,9"/><polyline points="4,16 4,20 20,20 20,16"/>
+</symbol>
 
-<p class="subtitle">
-Self-hosted services running on a Late 2014 Mac mini
-</p>
+<symbol id="icon-doc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square" stroke-linejoin="miter">
+<rect x="6" y="3" width="12" height="18"/><line x1="9" y1="8" x2="15" y2="8"/>
+<line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/>
+</symbol>
 
-<div class="cards">
+<symbol id="icon-grid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square" stroke-linejoin="miter">
+<rect x="4" y="4" width="7" height="7"/><rect x="13" y="4" width="7" height="7"/>
+<rect x="4" y="13" width="7" height="7"/><rect x="13" y="13" width="7" height="7"/>
+</symbol>
 
-<a class="card" href="/s/">
-<h2>📁 File Sharing</h2>
-<p>Secure uploads and downloads</p>
+<symbol id="icon-checklist" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square" stroke-linejoin="miter">
+<rect x="4" y="5" width="2" height="2"/><rect x="4" y="11" width="2" height="2"/><rect x="4" y="17" width="2" height="2"/>
+<line x1="9" y1="6" x2="20" y2="6"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="18" x2="20" y2="18"/>
+</symbol>
+
+<symbol id="icon-crumbs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square" stroke-linejoin="miter">
+<rect x="4" y="5" width="3" height="3"/><rect x="16" y="4" width="3" height="3"/><rect x="10" y="10" width="3" height="3"/>
+<rect x="4" y="16" width="3" height="3"/><rect x="16" y="17" width="3" height="3"/>
+</symbol>
+
+</svg>
+
+<nav class="nav-bar">
+<div class="nav-inner">
+<a class="brand" href="index.html"><img class="logo" src="img/logo.png" alt=""> Pietro's Server</a>
+<div class="nav-links">
+<a class="nav-link active" href="index.html">Home</a>
+<a class="nav-link" href="infrastructure.html">Infrastructure</a>
+</div>
+</div>
+</nav>
+
+<header class="page-head">
+<div class="inner">
+<img class="logo-lg" src="img/logo.png" alt="">
+<div>
+<h1 class="display-hero">Pietro's Server</h1>
+<p class="body-md">Specs and services for a home server running on a Late 2014 Mac mini.</p>
+</div>
+</div>
+</header>
+
+<section class="band band-light">
+<div class="inner">
+
+<div class="section-head">
+<div class="eyebrow">Hardware</div>
+</div>
+
+<dl class="spec">
+<div class="spec-row"><dt>Model</dt><dd>Mac mini (Late 2014)</dd></div>
+<div class="spec-row"><dt>Memory</dt><dd>4 GB RAM</dd></div>
+<div class="spec-row"><dt>Storage</dt><dd>500 GB HDD</dd></div>
+</dl>
+
+</div>
+</section>
+
+<section class="band band-light">
+<div class="inner">
+
+<div class="section-head">
+<div class="eyebrow">Software</div>
+</div>
+
+<dl class="spec">
+<div class="spec-row"><dt>Operating system</dt><dd>Ubuntu Server</dd></div>
+<div class="spec-row"><dt>Version</dt><dd>26.04 LTS</dd></div>
+<div class="spec-row"><dt>Runtime</dt><dd>Docker Engine, single bridge network</dd></div>
+<div class="spec-row"><dt>Ingress</dt><dd>Caddy, with Let's Encrypt and an internal CA</dd></div>
+</dl>
+
+</div>
+</section>
+
+<section class="band band-light" id="services">
+<div class="inner">
+
+<div class="section-head">
+<div class="eyebrow">Services I run</div>
+</div>
+
+<div class="category">
+<h3 class="category-title">Sharing</h3>
+<div class="card-grid">
+
+<a class="card" href="https://github.com/smp46/pingvin-share-x">
+<img class="card-icon" src="img/svc/pingvin-share.svg" alt="">
+<div class="card-head"><h3>Pingvin Share</h3></div>
+<p>Sharing is caring. Send and receive files.</p>
+<div class="card-links"><span class="card-link">View project</span></div>
 </a>
 
-<a class="card" href="https://notes.pietroserver.duckdns.org/p/PublicPad">
-<h2>📚 Public doc</h2>
-<p>Personal wiki</p>
+<div class="card">
+<img class="card-icon" src="img/logo.png" alt="">
+<div class="card-head"><h3>Upload Portal</h3><span class="chip chip-red">Custom made</span></div>
+<p>Others send files straight to me. Built from scratch in Go.</p>
+<div class="card-links">
+<a class="card-link" href="upload-portal.html">Read how it works</a>
+<a class="card-link-quiet" href="https://github.com/pietrosaveri/srv-docker/tree/main/upload-portal">Source</a>
+</div>
+</div>
+
+<a class="card" href="https://github.com/filebrowser/filebrowser">
+<img class="card-icon" src="img/svc/filebrowser.svg" alt="">
+<div class="card-head"><h3>File Browser</h3></div>
+<p>Browse and manage server files.</p>
+<div class="card-links"><span class="card-link">View project</span></div>
 </a>
 
-<div class="card disabled">
-<h2>📷 Photos</h2>
-<p>Coming Soon</p>
+</div>
 </div>
 
-<div class="card disabled">
-<h2>🎵 Music</h2>
-<p>Coming Soon</p>
+<div class="category">
+<h3 class="category-title">Notes and docs</h3>
+<div class="card-grid">
+
+<div class="card">
+<img class="card-icon" src="img/svc/etherpad.svg" alt="">
+<div class="card-head"><h3>Etherpad</h3></div>
+<p>Real-time collaborative text pad.</p>
+<div class="card-links"><a class="card-link" href="https://notes.pietroserver.duckdns.org/p/PublicPad">Write something cool</a></div>
+</div>
+
+<a class="card" href="https://github.com/docmost/docmost">
+<svg class="card-icon"><use href="#icon-doc"/></svg>
+<div class="card-head"><h3>Docmost</h3></div>
+<p>Self-hosted docs and wiki, a Notion alternative.</p>
+<div class="card-links"><span class="card-link">View project</span></div>
+</a>
+
+<a class="card" href="https://github.com/ZenNotes/zennotes">
+<svg class="card-icon"><use href="#icon-checklist"/></svg>
+<div class="card-head"><h3>ZenNotes</h3></div>
+<p>Personal markdown notes vault.</p>
+<div class="card-links"><span class="card-link">View project</span></div>
+</a>
+
+<a class="card" href="https://github.com/bretzel-app/crumbs">
+<svg class="card-icon"><use href="#icon-crumbs"/></svg>
+<div class="card-head"><h3>Crumbs</h3></div>
+<p>Quick, lightweight notes.</p>
+<div class="card-links"><span class="card-link">View project</span></div>
+</a>
+
+</div>
+</div>
+
+<div class="category">
+<h3 class="category-title">Infrastructure</h3>
+<div class="card-grid">
+
+<a class="card" href="https://github.com/lucaslorentz/caddy-docker-proxy">
+<img class="card-icon" src="img/svc/caddy.svg" alt="">
+<div class="card-head"><h3>Caddy</h3></div>
+<p>Reverse proxy. Routes every request to the right service.</p>
+<div class="card-links"><span class="card-link">View project</span></div>
+</a>
+
+<a class="card" href="https://github.com/portainer/portainer">
+<img class="card-icon" src="img/svc/portainer.svg" alt="">
+<div class="card-head"><h3>Portainer</h3></div>
+<p>Docker container management.</p>
+<div class="card-links"><span class="card-link">View project</span></div>
+</a>
+
+<a class="card" href="https://github.com/nicolargo/glances">
+<img class="card-icon" src="img/svc/glances.svg" alt="">
+<div class="card-head"><h3>Glances</h3></div>
+<p>Real-time system monitoring.</p>
+<div class="card-links"><span class="card-link">View project</span></div>
+</a>
+
+<a class="card" href="https://github.com/AdguardTeam/AdGuardHome">
+<img class="card-icon" src="img/svc/adguard-home.svg" alt="">
+<div class="card-head"><h3>AdGuard Home</h3></div>
+<p>Network-wide DNS and ad blocking.</p>
+<div class="card-links"><span class="card-link">View project</span></div>
+</a>
+
+<a class="card" href="https://github.com/gethomepage/homepage">
+<svg class="card-icon"><use href="#icon-grid"/></svg>
+<div class="card-head"><h3>Homepage</h3></div>
+<p>Dashboard for everything running here.</p>
+<div class="card-links"><span class="card-link">View project</span></div>
+</a>
+
+</div>
 </div>
 
 </div>
+</section>
 
-<footer>
-
-Powered by Docker • Ubuntu • Caddy
-
-</footer>
-
+<div class="foot-wrap">
+<div class="foot">Running on a Late 2014 Mac mini.</div>
 </div>
-
-<script src="js/app.js"></script>
 
 </body>
 </html>

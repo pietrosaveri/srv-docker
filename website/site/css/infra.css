@@ -1,0 +1,415 @@
+/* The hidden attribute must win over any display rule below it. */
+[hidden]{
+    display:none !important;
+}
+
+/* ═══ diagram list ═══ */
+
+.diagram-list{
+    border-top:1px solid var(--ink);
+}
+
+.diagram-row{
+    display:flex;
+    align-items:center;
+    gap:var(--sp-2xl);
+    width:100%;
+    padding:var(--sp-2xl) var(--sp-lg) var(--sp-2xl) 0;
+    background:transparent;
+    border:none;
+    border-bottom:1px solid rgba(37,40,43,.15);
+    color:inherit;
+    font-family:inherit;
+    text-align:left;
+    cursor:pointer;
+    transition:padding-left .15s ease,background .15s ease;
+}
+
+.diagram-row:hover,
+.diagram-row:focus-visible{
+    background:var(--canvas-soft);
+    padding-left:var(--sp-lg);
+    outline:none;
+}
+
+.d-num{
+    flex:0 0 auto;
+    font-size:14px;
+    font-weight:700;
+    color:var(--body);
+}
+
+.diagram-row:hover .d-num{
+    color:var(--primary);
+}
+
+.d-title{
+    flex:1 1 auto;
+    font-size:24px;
+    font-weight:700;
+    line-height:1.2;
+}
+
+.d-kind{
+    flex:0 0 auto;
+    font-size:14px;
+    font-weight:700;
+    background:var(--canvas-soft);
+    color:var(--ink);
+    padding:var(--sp-xs) var(--sp-md);
+    border-radius:var(--r-pill-md);
+    text-transform:capitalize;
+}
+
+.diagram-row:hover .d-kind{
+    background:var(--primary);
+    color:var(--on-primary);
+}
+
+.list-hint{
+    color:var(--body);
+    margin-top:var(--sp-xl);
+}
+
+/* ═══ viewer, an ink surface, matching the nav / hero / footer polarity ═══ */
+
+body.viewer-open{
+    overflow:hidden;
+}
+
+.viewer{
+    position:fixed;
+    inset:0;
+    z-index:50;
+    display:flex;
+    flex-direction:column;
+    background:var(--ink);
+    color:var(--on-dark);
+}
+
+.viewer-bar{
+    display:flex;
+    align-items:center;
+    gap:var(--sp-lg);
+    flex-wrap:wrap;
+    padding:var(--sp-lg) var(--sp-3xl);
+    border-bottom:1px solid rgba(255,255,255,.2);
+}
+
+#viewer-title{
+    flex:1 1 auto;
+    min-width:200px;
+    font-size:24px;
+    font-weight:700;
+    line-height:1.2;
+}
+
+.viewer-ctls{
+    display:flex;
+    align-items:center;
+    gap:var(--sp-sm);
+}
+
+.vbtn{
+    font-family:inherit;
+    font-size:16px;
+    font-weight:400;
+    background:transparent;
+    color:var(--on-dark);
+    border:1px solid rgba(255,255,255,.45);
+    border-radius:var(--r-pill-lg);
+    padding:var(--sp-sm) var(--sp-lg);
+    cursor:pointer;
+    line-height:1.25;
+    transition:background .15s ease,color .15s ease,border-color .15s ease;
+}
+
+.vbtn:hover{
+    background:var(--on-dark);
+    color:var(--ink);
+    border-color:var(--on-dark);
+}
+
+.vbtn.close{
+    background:var(--primary);
+    border-color:var(--primary);
+    color:var(--on-primary);
+    font-weight:700;
+}
+
+.vbtn.close:hover{
+    background:#c00;
+    border-color:#c00;
+    color:var(--on-primary);
+}
+
+#zoom-level{
+    font-size:14px;
+    font-weight:700;
+    color:var(--mute);
+    min-width:52px;
+    text-align:center;
+}
+
+/* stage */
+
+.viewer-stage{
+    position:relative;
+    flex:1 1 auto;
+    overflow:hidden;
+    cursor:grab;
+    touch-action:none;
+}
+
+.viewer-stage.grabbing{
+    cursor:grabbing;
+}
+
+.viewer-canvas{
+    position:absolute;
+    top:0;
+    left:0;
+    transform-origin:0 0;
+}
+
+.viewer-canvas svg{
+    display:block;
+    max-width:none !important;
+}
+
+/* 6px content radius from the design system */
+
+.viewer-canvas svg .node rect,
+.viewer-canvas svg rect.actor,
+.viewer-canvas svg .cluster rect,
+.viewer-canvas svg .note,
+.viewer-canvas svg rect.labelBox{
+    rx:6;
+    ry:6;
+}
+
+/* Mermaid derives edge-label text colour from its own computed vars, which
+   lands dark-on-dark against the ink surface. Force it white on ink. */
+.viewer-canvas svg .edgeLabel,
+.viewer-canvas svg .edgeLabel p,
+.viewer-canvas svg .edgeLabel span,
+.viewer-canvas svg .edgeLabel div{
+    background:var(--ink) !important;
+    color:var(--on-dark) !important;
+    fill:var(--on-dark) !important;
+}
+
+.viewer-canvas svg .edgeLabel rect{
+    fill:var(--ink) !important;
+    opacity:1 !important;
+}
+
+/* edge label text set as plain SVG text in some diagram types */
+.viewer-canvas svg .edgeLabels text,
+.viewer-canvas svg text.edgeLabel{
+    fill:var(--on-dark) !important;
+}
+
+/* Clickable nodes: a quiet red outline at rest, a filled tint on hover.
+   No transform here on purpose, mermaid sets transform="translate(...)" on
+   g.node and a CSS transform would override it and displace the node. */
+
+.viewer-canvas svg g.node.has-info{
+    cursor:pointer;
+}
+
+.viewer-canvas svg g.node.has-info rect,
+.viewer-canvas svg g.node.has-info polygon,
+.viewer-canvas svg g.node.has-info circle,
+.viewer-canvas svg g.node.has-info ellipse,
+.viewer-canvas svg g.node.has-info path{
+    stroke:#e60000;
+    stroke-opacity:.65;
+    transition:fill .14s ease,stroke-opacity .14s ease,stroke-width .14s ease;
+}
+
+.viewer-canvas svg g.node.has-info:hover rect,
+.viewer-canvas svg g.node.has-info:hover polygon,
+.viewer-canvas svg g.node.has-info:hover circle,
+.viewer-canvas svg g.node.has-info:hover ellipse,
+.viewer-canvas svg g.node.has-info:hover path{
+    fill:#ffe9e9;
+    stroke-opacity:1;
+    stroke-width:2px;
+}
+
+/* labels are foreignObject HTML with htmlLabels:true, so colour the div */
+.viewer-canvas svg g.node.has-info .nodeLabel,
+.viewer-canvas svg g.node.has-info foreignObject div,
+.viewer-canvas svg g.node.has-info foreignObject span{
+    transition:color .14s ease;
+}
+
+.viewer-canvas svg g.node.has-info:hover .nodeLabel,
+.viewer-canvas svg g.node.has-info:hover foreignObject div,
+.viewer-canvas svg g.node.has-info:hover foreignObject span{
+    color:#e60000 !important;
+}
+
+.viewer-canvas svg g.node.has-info:hover text{
+    fill:#e60000 !important;
+}
+
+/* overlays */
+
+#viewer-status{
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    font-size:18px;
+    color:var(--mute);
+}
+
+#viewer-hint{
+    position:absolute;
+    right:var(--sp-3xl);
+    bottom:var(--sp-lg);
+    z-index:1;
+    font-size:14px;
+    color:var(--mute);
+    pointer-events:none;
+}
+
+/* floating notes card */
+
+.note-card{
+    position:absolute;
+    left:var(--sp-2xl);
+    top:var(--sp-2xl);
+    z-index:2;
+    width:min(440px,calc(100% - 48px));
+    background:var(--canvas);
+    color:var(--ink);
+    border-radius:var(--r-card);
+}
+
+.note-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:var(--sp-sm);
+    padding:var(--sp-md) var(--sp-md) var(--sp-md) var(--sp-xl);
+    border-bottom:1px solid rgba(37,40,43,.15);
+    font-size:12px;
+    font-weight:600;
+    letter-spacing:.57px;
+    text-transform:uppercase;
+    color:var(--primary);
+}
+
+.note-card.collapsed .note-head{
+    border-bottom:none;
+}
+
+.note-toggle{
+    background:transparent;
+    border:none;
+    color:var(--body);
+    font-family:inherit;
+    font-size:20px;
+    font-weight:700;
+    line-height:1;
+    cursor:pointer;
+    padding:var(--sp-xxs) var(--sp-sm);
+}
+
+.note-toggle:hover{
+    color:var(--primary);
+}
+
+.note-body{
+    padding:var(--sp-xl);
+    font-size:18px;
+    line-height:1.56;
+    color:var(--ink);
+    max-height:min(58vh,520px);
+    overflow-y:auto;
+}
+
+.note-card.collapsed .note-body{
+    display:none;
+}
+
+/* node detail popup, positioned at the click point by JS */
+
+.node-info{
+    position:absolute;
+    top:0;
+    left:0;
+    z-index:3;
+    width:min(340px,calc(100% - 48px));
+    background:var(--canvas);
+    color:var(--ink);
+    border-radius:var(--r-card);
+    border-left:4px solid var(--primary);
+    padding:var(--sp-xl) var(--sp-xl) var(--sp-xl);
+}
+
+.node-info h4{
+    font-size:20px;
+    font-weight:700;
+    line-height:1.2;
+    margin-bottom:var(--sp-sm);
+    padding-right:var(--sp-2xl);
+}
+
+.node-info p{
+    font-size:16px;
+    line-height:1.5;
+    color:var(--body);
+}
+
+.info-close{
+    position:absolute;
+    top:var(--sp-sm);
+    right:var(--sp-md);
+    background:transparent;
+    border:none;
+    color:var(--body);
+    font-family:inherit;
+    font-size:22px;
+    line-height:1;
+    cursor:pointer;
+    padding:var(--sp-xxs) var(--sp-xs);
+}
+
+.info-close:hover{
+    color:var(--primary);
+}
+
+@media (max-width:599px){
+    .viewer-bar{
+        gap:var(--sp-sm);
+        padding:var(--sp-md) var(--sp-lg);
+    }
+    #viewer-title{
+        flex-basis:100%;
+        font-size:18px;
+    }
+    .vbtn{
+        font-size:14px;
+        padding:var(--sp-xs) var(--sp-md);
+    }
+    .note-card{
+        left:var(--sp-lg);
+        top:var(--sp-lg);
+        width:calc(100% - 32px);
+    }
+    .note-body{
+        padding:var(--sp-lg);
+        font-size:16px;
+        max-height:30vh;
+    }
+    .diagram-row{
+        gap:var(--sp-lg);
+    }
+    .d-title{
+        font-size:18px;
+    }
+}

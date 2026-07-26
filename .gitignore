@@ -25,3 +25,5 @@ upload-portal/frontend/node_modules/
 upload-portal/frontend/dist/
 upload-portal/backend/cmd/server/web/dist/*
 !upload-portal/backend/cmd/server/web/dist/.gitkeep
+
+infrastructure.md

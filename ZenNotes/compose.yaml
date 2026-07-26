@@ -1,0 +1,42 @@
+services:
+  zennotes:
+    image: adibhanna/zennotes:latest
+    container_name: zennotes
+
+    restart: unless-stopped
+
+    user: "1000:1000"
+
+
+    tmpfs:
+      - /tmp
+
+    security_opt:
+      - no-new-privileges:true
+
+    cap_drop:
+      - ALL
+
+    environment:
+      - ZENNOTES_AUTH_TOKEN=${ZENNOTES_AUTH_TOKEN}
+      - ZENNOTES_BEHIND_TLS=1
+
+    volumes:
+      - ./vault:/workspace
+      - ./data:/data
+
+    labels:
+      caddy_0: zennotes.home.arpa
+      caddy_0.tls: internal
+      caddy_0.reverse_proxy: zennotes:7878
+
+      # Optional public access
+      # caddy_1: zennotes.pietroserver.duckdns.org
+      # caddy_1.reverse_proxy: "{{upstreams 7878}}"
+
+    networks:
+      - homeserver
+
+networks:
+  homeserver:
+    external: true

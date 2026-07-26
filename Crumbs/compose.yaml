@@ -1,0 +1,27 @@
+services:
+  crumbs:
+    image: ghcr.io/bretzel-app/crumbs:latest
+    container_name: crumbs
+
+    restart: unless-stopped
+
+    security_opt:
+      - no-new-privileges:true
+
+    volumes:
+      - crumbs_data:/data
+
+    labels:
+      caddy_0: crumbs.home.arpa
+      caddy_0.tls: internal
+      caddy_0.reverse_proxy: "{{upstreams 3000}}"
+      
+    networks:
+      - homeserver
+
+volumes:
+  crumbs_data:
+
+networks:
+  homeserver:
+    external: true

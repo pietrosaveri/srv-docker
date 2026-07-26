@@ -1,0 +1,38 @@
+services:
+  etherpad:
+    image: etherpad/etherpad:latest
+    container_name: etherpad
+
+    restart: unless-stopped
+
+    environment:
+      - TZ=Europe/Athens
+
+      # Instance name
+      - TITLE=Pietro Notes
+
+      # Public URL
+      - PUBLIC_URL=https://notes.pietroserver.duckdns.org
+
+      # Create the admin account
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+
+    labels:
+      # Internal
+      caddy_0: notes.home.arpa
+      caddy_0.tls: internal
+      caddy_0.reverse_proxy: "{{upstreams 9001}}"
+
+      # Public
+      caddy_1: notes.pietroserver.duckdns.org
+      caddy_1.reverse_proxy: "{{upstreams 9001}}"
+
+    volumes:
+      - ./data:/opt/etherpad-lite/var
+
+    networks:
+      - homeserver
+
+networks:
+  homeserver:
+    external: true

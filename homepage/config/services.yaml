@@ -14,26 +14,41 @@
         href: https://files.home.arpa
         description: Browse server files
 
-    - AdGuard:
-        icon: adguard.png
+    - AdGuard Home:
+        icon: adguard-home.png
         href: https://adguard.home.arpa
         description: DNS and ad blocking
-        
-    - PingvinShare:
-        icon: PingvinShare.png
+
+    - Pingvin Share:
+        icon: pingvin-share.png
         href: https://share.home.arpa
         description: Sharing is caring
-        
-    - Docmost:
-        icon: Docmost.png
-        href: https://docmost.home.arpa
+
+    - Etherpad:
+        icon: etherpad.png
+        href: https://notes.pietroserver.duckdns.org
         description: Notion but free and light
 
     - Website:
+        icon: firefox.png
         href: https://pietroserver.duckdns.org
-        description: Cool public Website
+        description: Public website
 
     - Upload Portal:
         icon: mdi-upload
         href: https://upload.home.arpa/admin
         description: Others send files to me
+    
+    - Crumbs Notes:
+        icon: https://crumbs.home.arpa/favicon.ico
+        href: https://crumbs.home.arpa
+        description: Quick notes
+
+
+
+
+
+
+
+
+

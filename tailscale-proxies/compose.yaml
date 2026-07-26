@@ -1,0 +1,17 @@
+services:
+  dashboard:
+    image: alpine:latest
+    container_name: dashboard-proxy
+    command: sleep infinity
+    restart: unless-stopped
+
+    labels:
+      caddy: seizury.pietroserver.duckdns.org
+      caddy.reverse_proxy: 100.82.17.72:8765
+
+    networks:
+      - homeserver
+
+networks:
+  homeserver:
+    external: true

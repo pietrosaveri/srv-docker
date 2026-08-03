@@ -1,7 +1,32 @@
 ---
 # For configuration options and examples, please see:
 # https://gethomepage.dev/configs/settings/
+layout:
+  Infrastructure:
+    style: row
+    columns: 4
+
+  Productivity:
+    style: row
+    columns: 3
+
+  Files:
+    style: row
+    columns: 3
+
 
 providers:
   openweathermap: openweathermapapikey
   weatherapi: weatherapiapikey
+
+background:
+  image: /imgs/edgerunners.jpg
+  blur: sm # sm, "", md, xl... see https://tailwindcss.com/docs/backdrop-blur
+  #saturate: 50 # 0, 50, 100... see https://tailwindcss.com/docs/backdrop-saturate
+  #brightness: 100 # 0, 50, 75... see https://tailwindcss.com/docs/backdrop-brightness
+  opacity: 35 # 0-100
+  
+
+cardBlur: xl # xs, md, etc... see https://tailwindcss.com/docs/backdrop-blur
+
+favicon: imgs/gitubuh_logo.jpeg

@@ -9,4 +9,16 @@
 
 - search:
     provider: duckduckgo
-    target: _blank
+    target: 
+    
+- openmeteo:
+    label: Concurez
+    latitude: 45.588539
+    longitude: 9.333931
+    units: metric
+
+- datetime:
+    text_size: xl
+    format:
+      timeStyle: short
+      dateStyle: long

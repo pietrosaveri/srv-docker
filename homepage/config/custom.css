@@ -1,0 +1,129 @@
+/* ==========================================================
+   HomeOS Theme for Homepage
+   ========================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+    --card-bg: rgba(22,28,38,.96);
+    --card-bg-hover: rgba(28,35,47,.98);
+
+    --card-border: rgba(255,255,255,.05);
+    --card-border-hover: rgba(255,255,255,.10);
+
+    --radius: 18px;
+    --blur: 28px;
+
+    --shadow:
+        0 8px 24px rgba(0,0,0,.30),
+        0 2px 8px rgba(0,0,0,.20);
+
+    --transition: .20s ease;
+}
+
+/* ==========================================================
+   Typography
+   ========================================================== */
+
+* {
+    font-family: "Inter", sans-serif !important;
+}
+
+body {
+    font-weight: 500;
+}
+
+/* ==========================================================
+   Service Cards
+   ========================================================== */
+
+.service-card {
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--card-border);
+    transition: all var(--transition);
+    box-shadow: var(--shadow);
+}
+
+.bg-theme-200\/50,
+.flex-1.service-block {
+    background: var(--card-bg) !important;
+
+    backdrop-filter: blur(var(--blur)) saturate(180%);
+    -webkit-backdrop-filter: blur(var(--blur)) saturate(180%);
+}
+
+.service-card:hover {
+
+    transform: translateY(-2px);
+
+    border-color: var(--card-border-hover);
+
+    box-shadow:
+        0 14px 36px rgba(0,0,0,.42);
+}
+
+.service-card:hover .flex-1.service-block {
+    background: var(--card-bg-hover) !important;
+}
+
+/* ==========================================================
+   Widgets
+   ========================================================== */
+
+.widget,
+.information-widget,
+.info-widget {
+
+    background: var(--card-bg) !important;
+
+    border-radius: var(--radius);
+
+    border: 1px solid var(--card-border);
+
+    backdrop-filter: blur(var(--blur)) saturate(180%);
+    -webkit-backdrop-filter: blur(var(--blur)) saturate(180%);
+
+    box-shadow: var(--shadow);
+}
+
+/* ==========================================================
+   Search
+   ========================================================== */
+
+input {
+
+    background: rgba(20,26,36,.92) !important;
+
+    border: 1px solid var(--card-border) !important;
+
+    border-radius: 16px !important;
+}
+
+/* ==========================================================
+   Bookmarks
+   ========================================================== */
+
+.bookmark {
+    background: var(--card-bg) !important;
+
+    border-radius: 14px;
+
+    border: 1px solid var(--card-border);
+}
+
+/* ==========================================================
+   Icons
+   ========================================================== */
+
+.service-icon img {
+    border-radius: 12px;
+}
+
+/* ==========================================================
+   Footer
+   ========================================================== */
+
+#footer {
+    display: none;
+}

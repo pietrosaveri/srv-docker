@@ -3,11 +3,23 @@
         icon: portainer.png
         href: https://portainer.home.arpa
         description: Docker management
+        
+        widget:
+            type: portainer
+            url: http://portainer:9000
+            env: 3
+            key: "{{HOMEPAGE_VAR_PORTAINER_API_KEY}}"
 
     - Glances:
         icon: glances.png
         href: https://glances.home.arpa
         description: System monitoring
+        
+        widget:
+            type: glances
+            url: http://glances:61208
+            version: 4
+            metric: cpu
 
     - File Browser:
         icon: filebrowser.png
@@ -18,32 +30,46 @@
         icon: adguard-home.png
         href: https://adguard.home.arpa
         description: DNS and ad blocking
-
-    - Pingvin Share:
-        icon: pingvin-share.png
-        href: https://share.home.arpa
-        description: Sharing is caring
-
-    - Etherpad:
-        icon: etherpad.png
-        href: https://notes.pietroserver.duckdns.org
-        description: Notion but free and light
-
+        
+        widget:
+            type: adguard
+            url: http://adguard:3000
+            username: "{{HOMEPAGE_VAR_ADGUARD_USERNAME}}"
+            password: "{{HOMEPAGE_VAR_ADGUARD_PASSWORD}}"
+    
     - Website:
         icon: firefox.png
         href: https://pietroserver.duckdns.org
         description: Public website
 
-    - Upload Portal:
-        icon: mdi-upload
-        href: https://upload.home.arpa/admin
-        description: Others send files to me
-    
+- Productivuty:
     - Crumbs Notes:
         icon: https://crumbs.home.arpa/favicon.ico
         href: https://crumbs.home.arpa
         description: Quick notes
 
+    - Etherpad:
+        icon: etherpad.png
+        href: https://notes.pietroserver.duckdns.org
+        description: Notion but free and light
+        
+    - ZenNotes:
+        href: https://zennotes.home.arpa
+        description: Open Source Notion -ish
+
+
+- Files:
+    - Pingvin Share:
+        icon: pingvin-share.png
+        href: https://share.home.arpa
+        description: Sharing is caring
+        
+    - Upload Portal:
+        icon: mdi-upload
+        href: https://upload.home.arpa/admin
+        description: Others send files to me
+    
+    
 
 
 

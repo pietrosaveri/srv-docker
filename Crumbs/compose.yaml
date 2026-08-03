@@ -15,6 +15,9 @@ services:
       caddy_0: crumbs.home.arpa
       caddy_0.tls: internal
       caddy_0.reverse_proxy: "{{upstreams 3000}}"
+    # Public
+      caddy_1: crumbs.pietroserver.duckdns.org
+      caddy_1.reverse_proxy: "{{upstreams 3000}}"
       
     networks:
       - homeserver

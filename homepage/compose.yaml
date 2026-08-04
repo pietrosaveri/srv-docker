@@ -18,7 +18,7 @@ services:
 
     environment:
       PUID: 1000
-      PGID: 1000
+      PGID: 983
       HOMEPAGE_ALLOWED_HOSTS: mmserver:3005,homepage.home.arpa:3005,homepage.home.arpa,localhost:3000,127.0.0.1:3000
 
     volumes:

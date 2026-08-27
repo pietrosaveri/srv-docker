@@ -56,6 +56,9 @@
     - ZenNotes:
         href: https://zennotes.home.arpa
         description: Open Source Notion -ish
+    
+    - DocMost:
+        href: https://docmost.pietroserver.duckdns.org/home
 
 
 - Files:

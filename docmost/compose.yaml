@@ -20,9 +20,13 @@ services:
       REDIS_URL: redis://redis:6379
 
     labels:
-      caddy: docmost.home.arpa
-      caddy.tls: internal
-      caddy.reverse_proxy: "{{upstreams 3000}}"
+      caddy_0: docmost.home.arpa
+      caddy_0.tls: internal
+      caddy_0.reverse_proxy: "{{upstreams 3000}}"
+      
+        # Public
+      caddy_1: docmost.pietroserver.duckdns.org
+      caddy_1.reverse_proxy: "{{upstreams 3000}}"
 
     volumes:
       - ./data/storage:/app/data/storage

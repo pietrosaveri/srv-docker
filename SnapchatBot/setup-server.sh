@@ -8,13 +8,19 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-echo "==> Installing system packages (Xvfb, Chromium runtime libs, curl)..."
+echo "==> Installing system packages (Xvfb + Puppeteer's bundled Chrome runtime libs, curl)..."
+# NB: we deliberately don't install the 'chromium' apt package — on modern
+# Ubuntu that's just a snap wrapper (sandboxing headaches for headless use).
+# Puppeteer downloads and manages its own real Chrome binary via npm
+# install; these are the shared libraries THAT binary needs to run.
 sudo apt update
 sudo apt install -y \
-  xvfb chromium curl \
-  fonts-liberation libnss3 libatk-bridge2.0-0 libatk1.0-0 libcups2 \
-  libdrm2 libgbm1 libasound2t64 libxkbcommon0 libxcomposite1 libxdamage1 \
-  libxrandr2 libxfixes3
+  xvfb curl ca-certificates wget lsb-release xdg-utils \
+  fonts-liberation libnss3 libnspr4 libatk-bridge2.0-0 libatk1.0-0 \
+  libcups2 libdrm2 libgbm1 libasound2t64 libxkbcommon0 libxcomposite1 \
+  libxdamage1 libxrandr2 libxfixes3 libxrender1 libxi6 libxtst6 \
+  libxext6 libx11-6 libx11-xcb1 libxcb1 libexpat1 libdbus-1-3 \
+  libglib2.0-0 libcairo2 libpango-1.0-0 libpangocairo-1.0-0 libgtk-3-0
 
 echo "==> Installing Node.js (LTS via NodeSource)..."
 if ! command -v node >/dev/null 2>&1; then

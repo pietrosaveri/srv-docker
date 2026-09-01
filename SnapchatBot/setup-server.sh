@@ -16,6 +16,14 @@ sudo apt install -y \
   libdrm2 libgbm1 libasound2t64 libxkbcommon0 libxcomposite1 libxdamage1 \
   libxrandr2 libxfixes3
 
+echo "==> Installing Node.js (LTS via NodeSource)..."
+if ! command -v node >/dev/null 2>&1; then
+  curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+  sudo apt install -y nodejs
+else
+  echo "Node already installed ($(node --version))."
+fi
+
 echo "==> Installing Ollama..."
 if ! command -v ollama >/dev/null 2>&1; then
   curl -fsSL https://ollama.com/install.sh | sh

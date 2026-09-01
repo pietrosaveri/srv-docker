@@ -13,7 +13,7 @@ sudo apt update
 sudo apt install -y \
   xvfb chromium curl \
   fonts-liberation libnss3 libatk-bridge2.0-0 libatk1.0-0 libcups2 \
-  libdrm2 libgbm1 libasound2 libxkbcommon0 libxcomposite1 libxdamage1 \
+  libdrm2 libgbm1 libasound2t64 libxkbcommon0 libxcomposite1 libxdamage1 \
   libxrandr2 libxfixes3
 
 echo "==> Installing Ollama..."

@@ -1,0 +1,12 @@
+{
+  "name": "snapchat-bot",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "login": "node login.js"
+  },
+  "dependencies": {
+    "puppeteer": "^23.0.0"
+  }
+}

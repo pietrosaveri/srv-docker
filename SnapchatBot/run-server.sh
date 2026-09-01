@@ -17,8 +17,24 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
+# xvfb-run spawns a non-interactive shell that doesn't source ~/.bashrc, so
+# an nvm-installed node (whose PATH entry lives there) would otherwise be
+# invisible to it. Pick it up explicitly if present.
+export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+if [ -s "$NVM_DIR/nvm.sh" ]; then
+  # shellcheck disable=SC1091
+  . "$NVM_DIR/nvm.sh"
+fi
+
+NODE_BIN="$(command -v node || true)"
+if [ -z "$NODE_BIN" ]; then
+  echo "node not found in PATH. Run 'which node' in your normal shell and either" >&2
+  echo "install Node.js system-wide, or add its directory to PATH above." >&2
+  exit 1
+fi
+
 if command -v xvfb-run >/dev/null 2>&1; then
-  exec xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" node aiSendSnap.js
+  exec xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" "$NODE_BIN" aiSendSnap.js
 else
   echo "xvfb-run not found — install the 'xvfb' package first." >&2
   exit 1

@@ -42,6 +42,20 @@
         href: https://pietroserver.duckdns.org
         description: Public website
 
+    - Traffic Monitor:
+        icon: mdi-car-clock
+        href: https://github.com/pietrosaveri/traffic-stat
+        description: Commute traffic + weather collector
+
+        widget:
+            type: customapi
+            url: http://traffic-stats-api:5000/today
+            refreshInterval: 30000
+            mappings:
+                - field: runs_today
+                  label: Runs today
+                  format: number
+
 - Productivuty:
     - Crumbs Notes:
         icon: https://crumbs.home.arpa/favicon.ico

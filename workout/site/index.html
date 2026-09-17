@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#111111">
+<title>Workout Plan</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --fg: #111111;
+    --muted: #666666;
+    --line: #dddddd;
+    --hover: #f4f4f4;
+    --chip: #ebebeb;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #111111;
+      --fg: #eeeeee;
+      --muted: #999999;
+      --line: #2e2e2e;
+      --hover: #1c1c1c;
+      --chip: #353535;
+    }
+  }
+
+  * { box-sizing: border-box; }
+
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font: 17px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  main {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 28px 16px 80px;
+  }
+
+  h1 {
+    font-size: 24px;
+    font-weight: 600;
+    margin: 0 0 6px;
+  }
+
+  .sub {
+    color: var(--muted);
+    font-size: 15px;
+    margin: 0 0 26px;
+  }
+
+  /* ---- day list ---- */
+  ul.days {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--line);
+  }
+
+  ul.days li { border-bottom: 1px solid var(--line); }
+
+  ul.days a {
+    display: block;
+    /* roomy enough to be an easy thumb target on a phone */
+    min-height: 60px;
+    padding: 15px 2px;
+    color: inherit;
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  ul.days a:active { background: var(--hover); }
+
+  ul.days a:hover { background: var(--hover); }
+
+  .day-name {
+    font-size: 19px;
+    font-weight: 600;
+    text-transform: capitalize;
+  }
+
+  .day-focus {
+    color: var(--muted);
+    font-size: 15px;
+    margin-top: 2px;
+  }
+
+  .today {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 1px 5px;
+    margin-left: 8px;
+    vertical-align: 1px;
+  }
+
+  /* ---- detail ---- */
+  .back {
+    display: inline-block;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 15px;
+    padding: 8px 8px 8px 0;
+    margin-bottom: 14px;
+  }
+
+  .back:hover { color: var(--fg); }
+
+  h2 {
+    display: inline-block;
+    background: var(--chip);
+    border-radius: 6px;
+    padding: 6px 11px;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin: 36px 0 14px;
+  }
+
+  h3 {
+    font-size: 17px;
+    font-weight: 700;
+    margin: 22px 0 6px;
+  }
+
+  p { margin: 0 0 11px; }
+
+  ul.items {
+    margin: 0 0 11px;
+    padding-left: 22px;
+  }
+
+  ul.items li { margin-bottom: 5px; }
+
+  /* wider screens: same layout, just a touch larger and calmer */
+  @media (min-width: 760px) {
+    body { font-size: 18px; }
+    main { padding: 56px 24px 96px; }
+    h1 { font-size: 28px; }
+    h2 { font-size: 15px; }
+    h3 { font-size: 18px; }
+    .day-name { font-size: 20px; }
+    ul.days a { padding: 17px 2px; }
+  }
+</style>
+</head>
+<body>
+<main id="app"></main>
+
+<script>
+const HANGBOARD_MAIN = {
+  title: "Fingerboard: main session",
+  blocks: [
+    { h: "Weeks 1-2: base",
+      p: ["Repeaters: 7 sec hang / 3 sec rest, x6 per set. 3 sets per grip, 3 min rest between sets.",
+          "20mm edge or bigger. Half-crimp and open-hand.",
+          "Add weight or move to a smaller edge only if 7/3 feels genuinely easy by the end of week 2."] },
+    { h: "Weeks 3-5: intensity",
+      p: ["Max hangs: 10 sec hang, 3 min rest, 4-5 reps per grip.",
+          "Add weight progressively, aiming for hangs at ~85-90% effort. Use a hangboard app (Crimpd, Grippy) or just a timer.",
+          "This is where the real strength gains happen. Any twinge in a pulley: stop immediately, don't push through."] },
+    { h: "Weeks 6-7: taper",
+      p: ["Drop volume by ~40%, keep intensity.",
+          "The point is fresh fingers for climbing hard, not fatigue."] }
+  ]
+};
+
+const HANGBOARD_LIGHT = {
+  title: "Fingerboard: maintenance",
+  blocks: [
+    { p: ["2 easy sets of repeaters on a big edge. Recovery and maintenance, never a second hard session."] }
+  ]
+};
+
+const DAYS = [
+  {
+    id: "mon",
+    name: "monday",
+    focus: "Fingerboard (main, hard) + push strength + core",
+    sections: [
+      HANGBOARD_MAIN,
+      { title: "Push strength",
+        blocks: [
+          { list: ["Dips: 3x8", "Triceps at machine", "Shoulders"] }
+        ] },
+      { title: "Core",
+        blocks: [ { list: ["Addominali classici"] } ] }
+    ]
+  },
+  {
+    id: "tue",
+    name: "tuesday",
+    focus: "Bouldering volume + technique, main circuit day",
+    sections: [
+      { title: "Bouldering volume",
+        blocks: [
+          { p: ["Lots of easy and moderate problems. Technique over difficulty."] }
+        ] },
+      { title: "Circuits: the core of the session",
+        blocks: [
+          { p: ["20-30 min of circuits, well below your limit.",
+                "Focus on flow, footwork and pacing."] }
+        ] }
+    ]
+  },
+  {
+    id: "wed",
+    name: "wednesday",
+    focus: "Moonboard + power / limit bouldering, main projecting day",
+    sections: [
+      { title: "Moonboard",
+        blocks: [
+          { p: ["First 15 min: easier moonboard problems below your limit, to groove technique: foot precision, hips to wall, straight arms."] },
+          { p: ["Remaining time: problems 1-2 grades above what you can currently do. Try moves in isolation rather than full burns every time."] },
+          { p: ["Log which holds and moves you fail on. That tells you what to drill."] }
+        ] },
+      { title: "Circuits (optional)",
+        blocks: [
+          { p: ["10 min easy circuit at the very end, only if fingers and skin feel fresh. Cool-down, not real work."] }
+        ] }
+    ]
+  },
+  {
+    id: "thu",
+    name: "thursday",
+    focus: "Pull strength + light fingerboard + core",
+    sections: [
+      { title: "Pull strength",
+        blocks: [
+          { list: ["Weighted pull-ups: 4x5 with added weight", "Rows"] }
+        ] },
+      HANGBOARD_LIGHT,
+      { title: "Core",
+        blocks: [ { list: ["Addominali classici"] } ] }
+    ]
+  },
+  {
+    id: "fri",
+    name: "friday",
+    focus: "Climbing, try hard",
+    sections: [
+      { title: "Climbing",
+        blocks: [
+          { p: ["Project red-grade problems. Try hard."] }
+        ] }
+    ]
+  },
+  {
+    id: "sat",
+    name: "saturday",
+    focus: "Full rest",
+    sections: [
+      { title: "Rest",
+        blocks: [ { p: ["Full rest. Nothing."] } ] }
+    ]
+  },
+  {
+    id: "sun",
+    name: "sunday",
+    focus: "Full rest + flexibility + optional light circuits",
+    sections: [
+      { title: "Flexibility / mobility",
+        blocks: [ { p: ["Stretching classico."] } ] },
+      { title: "Circuits (optional)",
+        blocks: [
+          { p: ["If you want to move: 15-20 min of very easy circuits, well below flash grade. Active recovery instead of just a walk."] }
+        ] }
+    ]
+  }
+];
+
+const app = document.getElementById("app");
+const todayId = DAYS[(new Date().getDay() + 6) % 7].id;
+
+function esc(s) {
+  return s.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+}
+
+function renderList() {
+  document.title = "Workout Plan";
+  const rows = DAYS.map(d => `
+    <li>
+      <a href="#${d.id}">
+        <div class="day-name">${esc(d.name)}${d.id === todayId ? '<span class="today">today</span>' : ""}</div>
+        <div class="day-focus">${esc(d.focus)}</div>
+      </a>
+    </li>`).join("");
+
+  app.innerHTML = `
+    <h1>Workout Plan</h1>
+    <p class="sub">Weekly template. Repeat with increasing intensity.</p>
+    <ul class="days">${rows}</ul>`;
+  window.scrollTo(0, 0);
+}
+
+function renderBlock(b) {
+  let out = "";
+  if (b.h) out += `<h3>${esc(b.h)}</h3>`;
+  if (b.p) out += b.p.map(t => `<p>${esc(t)}</p>`).join("");
+  if (b.list) out += `<ul class="items">${b.list.map(t => `<li>${esc(t)}</li>`).join("")}</ul>`;
+  return out;
+}
+
+function renderDay(day) {
+  document.title = day.name + " / Workout Plan";
+  const sections = day.sections.map(s =>
+    `<h2>${esc(s.title)}</h2>${s.blocks.map(renderBlock).join("")}`).join("");
+
+  app.innerHTML = `
+    <a class="back" href="#">&larr; all days</a>
+    <h1 style="text-transform:capitalize">${esc(day.name)}</h1>
+    <p class="sub">${esc(day.focus)}</p>
+    ${sections}`;
+  window.scrollTo(0, 0);
+}
+
+function route() {
+  const id = location.hash.slice(1);
+  const day = DAYS.find(d => d.id === id);
+  day ? renderDay(day) : renderList();
+}
+
+window.addEventListener("hashchange", route);
+route();
+</script>
+</body>
+</html>

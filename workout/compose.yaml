@@ -1,0 +1,26 @@
+services:
+  workout:
+    image: nginx:alpine
+    container_name: workout
+
+    restart: unless-stopped
+
+    security_opt:
+      - no-new-privileges:true
+
+    volumes:
+      - ./site:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+
+    labels:
+      # LAN only: no duckdns hostname here on purpose.
+      caddy: workoutplan.home.arpa
+      caddy.tls: internal
+      caddy.reverse_proxy: "{{upstreams 80}}"
+
+    networks:
+      - homeserver
+
+networks:
+  homeserver:
+    external: true

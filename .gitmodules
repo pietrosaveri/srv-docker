@@ -1,3 +1,6 @@
 [submodule "traffic-stat"]
 	path = traffic-stat
 	url = https://github.com/pietrosaveri/traffic-stat.git
+[submodule "SeizuryHQ/site/seizury-hq"]
+	path = SeizuryHQ/site/seizury-hq
+	url = https://github.com/ashley-andrea/seizury-hq.git

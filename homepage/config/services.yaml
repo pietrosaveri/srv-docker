@@ -44,7 +44,7 @@
 
     - Traffic Monitor:
         icon: mdi-car-clock
-        href: https://github.com/pietrosaveri/traffic-stat
+        href: https://traffic-stat.home.arpa/dashboard
         description: Commute traffic + weather collector
 
         widget:
@@ -57,6 +57,11 @@
                   format: number
 
 - Productivuty:
+    - WorkoutPlan:
+        icon: firefox.png
+        href: https://workoutplan.home.arpa
+        description: workout plan website
+        
     - Crumbs Notes:
         icon: https://crumbs.home.arpa/favicon.ico
         href: https://crumbs.pietroserver.duckdns.org

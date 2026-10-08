@@ -1,0 +1,15 @@
+services:
+  seizuryHQ-proxy:
+    image: alpine:latest
+    container_name: seizuryHQ-proxy
+    command: sleep infinity
+    restart: unless-stopped
+    networks:
+      - homeserver
+    labels:
+      caddy: seizuryhq.duckdns.org
+      caddy.reverse_proxy: "http://172.18.0.1:8090"
+
+networks:
+  homeserver:
+    external: true

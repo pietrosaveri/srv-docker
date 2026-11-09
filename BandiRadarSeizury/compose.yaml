@@ -1,0 +1,72 @@
+# BandiRadar — https://bandiradarseizury.duckdns.org
+#
+#   /       dashboard (static HTML rebuilt by every scrape), behind basic auth
+#   /mcp    MCP server (streamable HTTP), behind its own bearer token
+#
+# The daily scrape is NOT started by `up`: it lives in the "job" profile and is
+# run by the host's bandi-scraper.timer (see ./systemd). Run it by hand with:
+#   docker compose run --rm bandi-scraper
+#
+# All runtime state (SQLite DB, documents, reports, dashboard, logs) is written to
+# ./state via BANDI_HOME, never inside the BandiRadar submodule.
+
+x-bandi: &bandi
+  build: .
+  image: bandiradar:local
+  security_opt:
+    - no-new-privileges:true
+  env_file: .env
+  working_dir: /app
+  volumes:
+    - ./BandiRadar:/app:ro
+    - ./state:/state
+  networks:
+    - homeserver
+
+services:
+  bandi-scraper:
+    <<: *bandi
+    profiles: ["job"]
+    restart: "no"
+    shm_size: 1gb          # headless Chromium crashes with Docker's default 64 MB /dev/shm
+    environment:
+      BANDI_HOME: /state
+      TZ: Europe/Rome
+    command: ["python", "-m", "bandi", "run"]
+
+  bandi-mcp:
+    <<: *bandi
+    container_name: bandi-mcp
+    restart: unless-stopped
+    environment:
+      BANDI_HOME: /state
+      TZ: Europe/Rome
+      MCP_TRANSPORT: http
+      MCP_PORT: "8000"
+      MCP_ALLOWED_HOSTS: bandiradarseizury.duckdns.org
+    command: ["python", "-m", "bandi.mcp_server"]
+    labels:
+      caddy: bandiradarseizury.duckdns.org
+      caddy.reverse_proxy: "/mcp* {{upstreams 8000}}"
+
+  bandi-web:
+    image: nginx:alpine
+    container_name: bandi-web
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - ./state/dashboard:/usr/share/nginx/html:ro
+    labels:
+      caddy: bandiradarseizury.duckdns.org
+      caddy.reverse_proxy: "{{upstreams 80}}"
+      # Basic auth on everything except /mcp (which checks its own bearer token).
+      caddy.@dashboard.not: "path /mcp*"
+      caddy.basic_auth: "@dashboard"
+      caddy.basic_auth.seizury: "${BANDI_DASH_HASH:?set BANDI_DASH_HASH in .env}"
+    networks:
+      - homeserver
+
+networks:
+  homeserver:
+    external: true

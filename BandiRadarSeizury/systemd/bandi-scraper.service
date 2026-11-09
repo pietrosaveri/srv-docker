@@ -1,0 +1,12 @@
+[Unit]
+Description=BandiRadar daily scrape (one-shot container)
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# EDIT: absolute path of srv-docker/BandiRadarSeizury on the server
+WorkingDirectory=/CHANGE_ME/srv-docker/BandiRadarSeizury
+ExecStart=/usr/bin/docker compose run --rm bandi-scraper
+TimeoutStartSec=3h

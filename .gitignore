@@ -29,3 +29,6 @@ upload-portal/backend/cmd/server/web/dist/*
 infrastructure.md
 SeizuryHQ/site/seizury-hq/
 spione/
+
+# BandiRadar runtime state (DB, documents, reports, dashboard)
+BandiRadarSeizury/state/

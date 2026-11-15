@@ -1,0 +1,37 @@
+# ---- Server runtime (users, tokens, trips, uploaded tickets and photos)
+data/
+.env
+
+# ---- Xcode: per-user state and build output
+xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+*.xccheckout
+DerivedData/
+build/
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+timeline.xctimeline
+playground.xcworkspace
+.swiftpm/
+.build/
+Packages/
+Package.resolved
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/
+fastlane/test_output/
+
+# ---- Go
+backend/tripthatshit
+*.test
+*.out
+
+# ---- OS / editors
+.DS_Store
+.vscode/
+.idea/
+*.swp

@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Runs aiSendSnap.js headed (not --headless) inside a virtual display, so it
+# Runs sendSnap.js headed (not --headless) inside a virtual display, so it
 # works on a Linux server with no monitor attached while still looking like
 # a real browser to Snapchat's fingerprinting.
 #
 # One-time setup on the server (Debian/Ubuntu):
 #   sudo apt update
-#   sudo apt install -y xvfb chromium \
+#   sudo apt install -y xvfb \
 #     fonts-liberation libnss3 libatk-bridge2.0-0 libatk1.0-0 libcups2 \
 #     libdrm2 libgbm1 libasound2 libxkbcommon0 libxcomposite1 libxdamage1 \
 #     libxrandr2 libxfixes3
@@ -34,7 +34,7 @@ if [ -z "$NODE_BIN" ]; then
 fi
 
 if command -v xvfb-run >/dev/null 2>&1; then
-  exec xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" "$NODE_BIN" aiSendSnap.js
+  exec xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" "$NODE_BIN" sendSnap.js "$@"
 else
   echo "xvfb-run not found — install the 'xvfb' package first." >&2
   exit 1

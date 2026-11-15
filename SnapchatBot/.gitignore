@@ -1,2 +1,5 @@
 node_modules/
 chrome-profile/
+black.y4m
+logs/
+cookies.json

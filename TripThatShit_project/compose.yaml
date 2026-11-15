@@ -1,0 +1,46 @@
+# TripThatShit sync server — https://trip.pietroserver.duckdns.org
+#
+# Lets friends share trips (legs, tickets, photos) between their phones.
+# The iOS app is in ./TripThatShit and is installed from Xcode, not the App Store.
+#
+# Setup:  cp .env.example .env   # set TRIP_APP_KEY
+#         mkdir -p data && sudo chown 1000:1000 data
+#         docker compose up -d --build
+
+services:
+  app:
+    build: ./backend
+    image: tripthatshit:latest
+    container_name: tripthatshit
+
+    restart: unless-stopped
+
+    security_opt:
+      - no-new-privileges:true
+
+    user: "1000:1000"
+
+    environment:
+      - TZ=Europe/Rome
+      - DATA_DIR=/data
+      - TRIP_APP_KEY=${TRIP_APP_KEY:?set TRIP_APP_KEY in .env}
+
+    labels:
+      # Local hostname (internal CA)
+      caddy_0: trip.home.arpa
+      caddy_0.tls: internal
+      caddy_0.reverse_proxy: "{{upstreams 8080}}"
+
+      # Public access: the phones reach it from anywhere on the trip
+      caddy_1: trip.pietroserver.duckdns.org
+      caddy_1.reverse_proxy: "{{upstreams 8080}}"
+
+    volumes:
+      - ./data:/data
+
+    networks:
+      - homeserver
+
+networks:
+  homeserver:
+    external: true

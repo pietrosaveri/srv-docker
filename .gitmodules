@@ -7,3 +7,6 @@
 [submodule "BandiRadarSeizury/BandiRadar"]
 	path = BandiRadarSeizury/BandiRadar
 	url = https://github.com/Seizury/BandiRadar.git
+[submodule "LazyLingo"]
+	path = LazyLingo
+	url = https://github.com/pietrosaveri/LazyLingo.git

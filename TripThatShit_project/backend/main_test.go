@@ -16,6 +16,7 @@ const (
 	tripID = "11111111-2222-4333-8444-555555555555"
 	legA   = "AAAAAAAA-2222-4333-8444-555555555555"
 	legB   = "BBBBBBBB-2222-4333-8444-555555555555"
+	stayA  = "CCCCCCCC-2222-4333-8444-555555555555"
 )
 
 type client struct {
@@ -107,8 +108,13 @@ func TestSharingFlow(t *testing.T) {
 	giulia.do("PUT", "/api/trips/"+tripID+"/legs/"+legB, leg(legA, ""), 400) // id mismatch
 	giulia.do("PATCH", "/api/trips/"+tripID, map[string]string{"title": "Nord 2027"}, 200)
 
+	// Stays work like legs, and their files are kept.
+	giulia.do("PUT", "/api/trips/"+tripID+"/files/HOTEL.pdf", []byte("booking"), 204)
+	giulia.do("PUT", "/api/trips/"+tripID+"/stays/"+stayA, leg(stayA, "HOTEL.pdf"), 200)
+	giulia.do("PUT", "/api/trips/"+tripID+"/stays/"+stayA, leg(legA, ""), 400)
+
 	trip = pietro.do("GET", "/api/trips/"+tripID, nil, 200)
-	if len(trip["legs"].([]any)) != 2 || trip["title"] != "Nord 2027" {
+	if len(trip["legs"].([]any)) != 2 || len(trip["stays"].([]any)) != 1 || trip["title"] != "Nord 2027" {
 		t.Fatalf("pietro does not see giulia's edits: %s", trip["_raw"])
 	}
 
@@ -127,8 +133,15 @@ func TestSharingFlow(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(dir, "trips", tripID, "files", "OLD.jpg")); !os.IsNotExist(err) {
 		t.Fatal("unreferenced file was not collected")
 	}
-	if _, err := os.Stat(filepath.Join(dir, "trips", tripID, "files", "T1.pdf")); err != nil {
-		t.Fatal("referenced file was collected")
+	for _, f := range []string{"T1.pdf", "HOTEL.pdf"} {
+		if _, err := os.Stat(filepath.Join(dir, "trips", tripID, "files", f)); err != nil {
+			t.Fatalf("referenced file %s was collected", f)
+		}
+	}
+	_ = os.Chtimes(filepath.Join(dir, "trips", tripID, "files", "HOTEL.pdf"), old, old)
+	giulia.do("DELETE", "/api/trips/"+tripID+"/stays/"+stayA, nil, 200)
+	if _, err := os.Stat(filepath.Join(dir, "trips", tripID, "files", "HOTEL.pdf")); !os.IsNotExist(err) {
+		t.Fatal("deleted stay's file was not collected")
 	}
 
 	// State survives a restart.

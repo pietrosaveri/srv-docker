@@ -61,6 +61,14 @@ struct LegEditorView: View {
                     Text("Gli orari sono nel fuso orario locale di ogni luogo.")
                 }
 
+                Section {
+                    Toggle(isOn: Binding(get: { leg.sleepsOnBoard }, set: { leg.overnight = $0 ? true : nil })) {
+                        Label("Dormiamo a bordo", systemImage: "moon.zzz.fill")
+                    }
+                } footer: {
+                    Text("Treno notte, traghetto con cabina, bus o volo notturno.")
+                }
+
                 Section("Dettagli") {
                     field("Compagnia (es. Elron, FlixBus)", $leg.carrier)
                     field("Numero treno o volo", $leg.number)

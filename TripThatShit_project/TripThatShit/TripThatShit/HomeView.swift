@@ -54,7 +54,7 @@ struct HomeView: View {
                 header.homeRow(top: 4)
 
                 if library.trips.isEmpty {
-                    HomeEmptyState(onNew: startCreating, onImport: { importing = true }, onSample: loadSample, onJoin: { joining = true })
+                    HomeEmptyState(onNew: startCreating, onImport: { importing = true }, onJoin: { joining = true })
                         .homeRow()
                 } else {
                     section("In corso e in arrivo", active)
@@ -176,7 +176,6 @@ struct HomeView: View {
             Menu {
                 Button { joining = true } label: { Label("Unisciti con codice", systemImage: "person.badge.plus") }
                 Button { importing = true } label: { Label("Importa viaggio", systemImage: "square.and.arrow.down") }
-                Button(action: loadSample) { Label("Bozza Scandinavia e Baltici", systemImage: "list.bullet.rectangle") }
             } label: {
                 Image(systemName: "ellipsis").font(.system(size: 16, weight: .semibold))
             }
@@ -196,9 +195,6 @@ struct HomeView: View {
         creating = true
     }
 
-    private func loadSample() {
-        onOpen(library.createSample())
-    }
 
     private func importFile(_ result: Result<URL, Error>) {
         guard case .success(let url) = result else { return }
@@ -250,6 +246,7 @@ struct TripCard: View {
                     ForEach(trip.modeCounts, id: \.0) { mode, _ in
                         ModeBadge(mode: mode, size: 26)
                     }
+                    if trip.stayCount > 0 { StayBadge(size: 26) }
                 }
             }
 
@@ -293,9 +290,10 @@ struct TripCard: View {
         var cal = Calendar(identifier: .gregorian)
         cal.timeZone = trip.startTZ
         let days = (cal.dateComponents([.day], from: cal.startOfDay(for: start), to: cal.startOfDay(for: end)).day ?? 0) + 1
-        let legs = trip.legCount == 1 ? "1 tratta" : "\(trip.legCount) tratte"
-        let dayText = days == 1 ? "1 giorno" : "\(days) giorni"
-        return "\(Fmt.range(start, trip.startTZ, end, trip.endTZ))  ·  \(legs)  ·  \(dayText)"
+        var parts = [Fmt.range(start, trip.startTZ, end, trip.endTZ)]
+        if trip.legCount > 0 { parts.append(trip.legCount == 1 ? "1 tratta" : "\(trip.legCount) tratte") }
+        parts.append(days == 1 ? "1 giorno" : "\(days) giorni")
+        return parts.joined(separator: "  ·  ")
     }
 }
 
@@ -342,7 +340,6 @@ struct ModeBar: View {
 struct HomeEmptyState: View {
     let onNew: () -> Void
     let onImport: () -> Void
-    let onSample: () -> Void
     let onJoin: () -> Void
 
     var body: some View {
@@ -360,13 +357,11 @@ struct HomeEmptyState: View {
                 .buttonStyle(PrimaryPillStyle())
                 .padding(.top, 4)
             HStack(spacing: 10) {
+                Button(action: onJoin) { Label("Unisciti", systemImage: "person.badge.plus") }
+                    .buttonStyle(SoftPillStyle())
                 Button(action: onImport) { Label("Importa", systemImage: "square.and.arrow.down") }
                     .buttonStyle(SoftPillStyle())
-                Button(action: onSample) { Label("Bozza", systemImage: "list.bullet.rectangle") }
-                    .buttonStyle(SoftPillStyle())
             }
-            Button(action: onJoin) { Label("Unisciti con codice", systemImage: "person.badge.plus") }
-                .buttonStyle(SoftPillStyle())
         }
         .padding(20)
         .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.Radius.lg, style: .continuous))

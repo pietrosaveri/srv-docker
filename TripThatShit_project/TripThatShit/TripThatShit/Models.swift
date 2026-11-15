@@ -88,7 +88,10 @@ nonisolated struct Leg: Codable, Hashable, Identifiable, Sendable {
     var notes = ""
     var links: [LinkItem] = []
     var attachments: [Attachment] = []
+    /// We sleep on board (night train, ferry cabin, night bus or flight). Optional so older files still decode.
+    var overnight: Bool?
 
+    var sleepsOnBoard: Bool { overnight ?? false }
     var isMappable: Bool { from.hasCoordinate && to.hasCoordinate }
     var duration: TimeInterval { max(0, arrival.timeIntervalSince(departure)) }
 
@@ -98,16 +101,49 @@ nonisolated struct Leg: Codable, Hashable, Identifiable, Sendable {
     }
 }
 
+/// Where we sleep that is not on board: hotel, hostel, apartment, a friend's sofa.
+nonisolated struct Stay: Codable, Hashable, Identifiable, Sendable {
+    var id = UUID()
+    var name = ""
+    var place: Place = .empty
+    var address = ""
+    var checkIn: Date
+    var checkOut: Date
+    var bookingRef = ""
+    var price = ""
+    var notes = ""
+    var links: [LinkItem] = []
+    var attachments: [Attachment] = []
+
+    static let symbol = "bed.double.fill"
+
+    var title: String { name.isEmpty ? (place.name.isEmpty ? "Alloggio" : place.name) : name }
+    var timeZone: TimeZone { place.timeZone }
+
+    /// Nights counted on the local calendar of the place.
+    var nights: Int {
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = timeZone
+        let d = cal.dateComponents([.day], from: cal.startOfDay(for: checkIn), to: cal.startOfDay(for: checkOut)).day ?? 0
+        return max(0, d)
+    }
+
+    var nightsText: String { nights == 1 ? "1 notte" : "\(nights) notti" }
+}
+
 nonisolated struct TripFile: Codable, Sendable {
     var title: String
     var legs: [Leg]
+    /// Optional so trips saved before stays existed still load.
+    var stays: [Stay]?
 }
 
 /// Portable trip with every attachment embedded, used to share the trip between phones.
 nonisolated struct TripPackage: Codable, Sendable {
-    var version = 1
+    var version = 2
     var title: String
     var legs: [Leg]
+    var stays: [Stay]?
     var files: [String: Data]
 }
 

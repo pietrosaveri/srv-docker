@@ -1,6 +1,6 @@
 # TripThatShit
 
-iOS trip planner (flights, trains, buses, ferries on a map, with tickets, photos and links)
+iOS trip planner (flights, trains, buses, ferries and where you sleep, on a map, with tickets, photos and links)
 plus a tiny sync server so friends can share a trip and all edit it.
 
 ```
@@ -16,8 +16,8 @@ design.md       design tokens the UI follows
 - A shared trip also syncs with the server. Edits are queued, sent when there is a
   connection, and friends' edits are pulled every 15 s while the trip is open, when the
   app comes back to the foreground, and on pull-to-refresh in the trip list.
-- Changes merge **per leg**: two people editing different legs never overwrite each other.
-  If both edit the *same* leg, the last save wins.
+- Changes merge **per leg and per stay** (alloggio): two people editing different items never
+  overwrite each other. If both edit the *same* one, the last save wins.
 - Tickets, PDFs and photos are uploaded with their leg and downloaded on every member's
   phone, so they are available offline too.
 - **Transport colours are per phone** (Impostazioni → Colori dei mezzi). They are never synced.

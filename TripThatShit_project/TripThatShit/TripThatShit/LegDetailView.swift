@@ -87,6 +87,14 @@ struct LegDetailView: View {
                     .foregroundStyle(Theme.mute)
             }
             Spacer(minLength: 0)
+            if leg.sleepsOnBoard {
+                Label("Notte a bordo", systemImage: "moon.zzz.fill")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Theme.text)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(Theme.fill, in: Capsule())
+            }
         }
     }
 
@@ -157,9 +165,10 @@ struct LegDetailView: View {
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundStyle(Theme.text)
                             .frame(width: 36, height: 36)
-                            .background(Theme.fill, in: Circle())
+                            .contentShape(Circle())
                     }
-                    .buttonStyle(PressGrowStyle())
+                    .buttonStyle(.plain)
+                    .glassEffect(.regular.interactive(), in: Circle())
                 }
             }
             if !leg.seat.isEmpty { InfoRow(label: "Posto", value: leg.seat) }

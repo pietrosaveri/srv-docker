@@ -5,6 +5,7 @@ struct TripSummary: Identifiable {
     let id: UUID
     let title: String
     let legCount: Int
+    let stayCount: Int
     let start: Date?
     let startTZ: TimeZone
     let end: Date?
@@ -31,11 +32,17 @@ struct TripSummary: Identifiable {
         isShared = sync != nil
         members = sync?.members ?? []
         let legs = file.legs.sorted { $0.departure < $1.departure }
+        let stays = file.stays ?? []
         legCount = legs.count
-        start = legs.first?.departure
-        startTZ = legs.first?.from.timeZone ?? .current
-        end = legs.map(\.arrival).max()
-        endTZ = legs.max { $0.arrival < $1.arrival }?.to.timeZone ?? .current
+        stayCount = stays.count
+        // The trip spans its legs and its stays: (date, time zone) of every start and end.
+        let starts = legs.map { ($0.departure, $0.from.timeZone) } + stays.map { ($0.checkIn, $0.timeZone) }
+        let ends = legs.map { ($0.arrival, $0.to.timeZone) } + stays.map { ($0.checkOut, $0.timeZone) }
+        let first = starts.min { $0.0 < $1.0 }, last = ends.max { $0.0 < $1.0 }
+        start = first?.0
+        startTZ = first?.1 ?? .current
+        end = last?.0
+        endTZ = last?.1 ?? .current
         from = legs.first?.from.name
         to = legs.last?.to.name
         var order: [TransportMode] = []
@@ -114,13 +121,6 @@ final class TripLibrary {
         return store
     }
 
-    @discardableResult
-    func createSample() -> TripStore {
-        let store = newStore()
-        store.replaceAll(title: SampleItinerary.title, legs: SampleItinerary.legs())
-        reload()
-        return store
-    }
 
     func rename(_ id: UUID, to title: String) {
         store(for: id).saveTitle(title)

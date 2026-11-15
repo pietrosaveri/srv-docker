@@ -26,7 +26,7 @@ import (
 )
 
 const (
-	maxLegBytes  = 1 << 20   // one leg as JSON
+	maxItemBytes = 1 << 20   // one leg or stay as JSON
 	maxTripBytes = 16 << 20  // a whole trip on first share
 	maxFileBytes = 100 << 20 // one attachment
 	inviteTTL    = 14 * 24 * time.Hour
@@ -90,8 +90,10 @@ func (s *server) routes() http.Handler {
 	mux.HandleFunc("PUT /api/trips/{trip}", s.auth(s.createTrip))
 	mux.HandleFunc("GET /api/trips/{trip}", s.member(s.getTrip))
 	mux.HandleFunc("PATCH /api/trips/{trip}", s.member(s.patchTrip))
-	mux.HandleFunc("PUT /api/trips/{trip}/legs/{leg}", s.member(s.putLeg))
-	mux.HandleFunc("DELETE /api/trips/{trip}/legs/{leg}", s.member(s.deleteLeg))
+	mux.HandleFunc("PUT /api/trips/{trip}/legs/{item}", s.member(s.putItem("legs")))
+	mux.HandleFunc("DELETE /api/trips/{trip}/legs/{item}", s.member(s.deleteItem("legs")))
+	mux.HandleFunc("PUT /api/trips/{trip}/stays/{item}", s.member(s.putItem("stays")))
+	mux.HandleFunc("DELETE /api/trips/{trip}/stays/{item}", s.member(s.deleteItem("stays")))
 	mux.HandleFunc("PUT /api/trips/{trip}/files/{name}", s.member(s.putFile))
 	mux.HandleFunc("GET /api/trips/{trip}/files/{name}", s.member(s.getFile))
 	mux.HandleFunc("POST /api/trips/{trip}/invites", s.member(s.createInvite))
@@ -218,20 +220,29 @@ func (s *server) createTrip(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Title string            `json:"title"`
 		Legs  []json.RawMessage `json:"legs"`
+		Stays []json.RawMessage `json:"stays"`
 	}
 	if !readBody(w, r, &body, maxTripBytes) {
 		return
 	}
-	legs := map[string]json.RawMessage{}
-	for _, raw := range body.Legs {
-		legID, ok := legIDOf(raw)
-		if !ok {
-			httpError(w, http.StatusBadRequest, "every leg needs an id")
-			return
+	byID := func(list []json.RawMessage) (map[string]json.RawMessage, bool) {
+		m := map[string]json.RawMessage{}
+		for _, raw := range list {
+			itemID, ok := itemIDOf(raw)
+			if !ok {
+				return nil, false
+			}
+			m[itemID] = raw
 		}
-		legs[legID] = raw
+		return m, true
 	}
-	view, err := s.store.CreateTrip(id, currentUser(r).ID, cleanTitle(body.Title), legs)
+	legs, okLegs := byID(body.Legs)
+	stays, okStays := byID(body.Stays)
+	if !okLegs || !okStays {
+		httpError(w, http.StatusBadRequest, "every leg and stay needs an id")
+		return
+	}
+	view, err := s.store.CreateTrip(id, currentUser(r).ID, cleanTitle(body.Title), legs, stays)
 	if errors.Is(err, errExists) {
 		httpError(w, http.StatusConflict, "trip already shared")
 		return
@@ -265,31 +276,36 @@ func (s *server) patchTrip(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]int64{"version": v})
 }
 
-func (s *server) putLeg(w http.ResponseWriter, r *http.Request) {
-	legID := strings.ToUpper(r.PathValue("leg"))
-	var raw json.RawMessage
-	if !readBody(w, r, &raw, maxLegBytes) {
-		return
+// putItem stores one leg or stay (kind "legs" or "stays") as the app sent it.
+func (s *server) putItem(kind string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		itemID := strings.ToUpper(r.PathValue("item"))
+		var raw json.RawMessage
+		if !readBody(w, r, &raw, maxItemBytes) {
+			return
+		}
+		if id, ok := itemIDOf(raw); !ok || id != itemID {
+			httpError(w, http.StatusBadRequest, "id does not match the URL")
+			return
+		}
+		v, err := s.store.PutItem(r.PathValue("trip"), kind, itemID, raw)
+		if err != nil {
+			storeError(w, err)
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]int64{"version": v})
 	}
-	if id, ok := legIDOf(raw); !ok || id != legID {
-		httpError(w, http.StatusBadRequest, "leg id does not match the URL")
-		return
-	}
-	v, err := s.store.PutLeg(r.PathValue("trip"), legID, raw)
-	if err != nil {
-		storeError(w, err)
-		return
-	}
-	writeJSON(w, http.StatusOK, map[string]int64{"version": v})
 }
 
-func (s *server) deleteLeg(w http.ResponseWriter, r *http.Request) {
-	v, err := s.store.DeleteLeg(r.PathValue("trip"), strings.ToUpper(r.PathValue("leg")))
-	if err != nil {
-		storeError(w, err)
-		return
+func (s *server) deleteItem(kind string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		v, err := s.store.DeleteItem(r.PathValue("trip"), kind, strings.ToUpper(r.PathValue("item")))
+		if err != nil {
+			storeError(w, err)
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]int64{"version": v})
 	}
-	writeJSON(w, http.StatusOK, map[string]int64{"version": v})
 }
 
 func (s *server) leave(w http.ResponseWriter, r *http.Request) {
@@ -411,14 +427,14 @@ code{display:block;margin:24px 0;padding:18px;border-radius:20px;background:#161
 
 // ---------------------------------------------------------------- helpers
 
-func legIDOf(raw json.RawMessage) (string, bool) {
-	var leg struct {
+func itemIDOf(raw json.RawMessage) (string, bool) {
+	var item struct {
 		ID string `json:"id"`
 	}
-	if json.Unmarshal(raw, &leg) != nil {
+	if json.Unmarshal(raw, &item) != nil {
 		return "", false
 	}
-	id := strings.ToUpper(leg.ID)
+	id := strings.ToUpper(item.ID)
 	return id, reUUID.MatchString(id)
 }
 

@@ -22,6 +22,8 @@ final class TripStore {
     let id: UUID
     var title = "Il nostro viaggio"
     private(set) var legs: [Leg] = []
+    /// Where we sleep, sorted by check-in.
+    private(set) var stays: [Stay] = []
     private(set) var geometry: [UUID: LegGeometry] = [:]
     private(set) var stops: [Stop] = []
 
@@ -55,12 +57,26 @@ final class TripStore {
     // MARK: Queries
 
     func leg(_ id: UUID) -> Leg? { legs.first { $0.id == id } }
+    func stay(_ id: UUID) -> Stay? { stays.first { $0.id == id } }
+
+    /// Every attachment of the trip, legs and stays.
+    var allAttachments: [Attachment] { legs.flatMap(\.attachments) + stays.flatMap(\.attachments) }
+
+    /// Map area of a leg or a stay, for focusing the camera.
+    func rect(for id: UUID) -> MKMapRect? {
+        if let g = geometry[id] { return g.rect }
+        if let s = stay(id), s.place.hasCoordinate {
+            let p = MKMapPoint(s.place.coordinate)
+            return MKMapRect(x: p.x, y: p.y, width: 0, height: 0)
+        }
+        return nil
+    }
 
     /// The leg in progress, or the next one to depart.
     func currentOrNext(now: Date = .now) -> Leg? { legs.first { $0.arrival > now } }
 
     var allRect: MKMapRect? {
-        let rects = geometry.values.map(\.rect)
+        let rects = geometry.values.map(\.rect) + stays.compactMap { rect(for: $0.id) }
         guard var r = rects.first else { return nil }
         for x in rects.dropFirst() { r = r.union(x) }
         return r
@@ -81,17 +97,22 @@ final class TripStore {
         enqueue(.delete(leg.id))
     }
 
-    func replaceAll(title: String, legs newLegs: [Leg]) {
-        removeFiles(legs.flatMap(\.attachments))
-        let old = legs
-        self.title = title
-        legs = newLegs
+    func upsertStay(_ stay: Stay) {
+        if let i = stays.firstIndex(where: { $0.id == stay.id }) { stays[i] = stay } else { stays.append(stay) }
         didChange()
-        enqueueReplacement(of: old)
+        enqueue(.upsertStay(stay))
+    }
+
+    func deleteStay(_ stay: Stay) {
+        removeFiles(stay.attachments)
+        stays.removeAll { $0.id == stay.id }
+        didChange()
+        enqueue(.deleteStay(stay.id))
     }
 
     private func didChange() {
         legs.sort { $0.departure < $1.departure }
+        stays.sort { $0.checkIn < $1.checkIn }
         rebuildGeometry()
         save()
     }
@@ -131,13 +152,14 @@ final class TripStore {
     // MARK: Share between phones
 
     func load(package: TripPackage) {
-        removeFiles(legs.flatMap(\.attachments))
+        removeFiles(allAttachments)
         for (name, data) in package.files {
             try? data.write(to: attachmentsDir.appendingPathComponent(name), options: .atomic)
         }
-        let old = legs
+        let old = (legs, stays)
         title = package.title
         legs = package.legs
+        stays = package.stays ?? []
         didChange()
         enqueueReplacement(of: old)
     }
@@ -149,6 +171,7 @@ final class TripStore {
               let file = try? JSONDecoder().decode(TripFile.self, from: data) else { return }
         title = file.title
         legs = file.legs.sorted { $0.departure < $1.departure }
+        stays = (file.stays ?? []).sorted { $0.checkIn < $1.checkIn }
         rebuildGeometry()
         if let data = try? Data(contentsOf: syncURL) {
             syncState = try? JSONDecoder().decode(SyncState.self, from: data)
@@ -156,7 +179,7 @@ final class TripStore {
     }
 
     private func save() {
-        let file = TripFile(title: title, legs: legs)
+        let file = TripFile(title: title, legs: legs, stays: stays)
         guard let data = try? JSONEncoder().encode(file) else { return }
         try? data.write(to: dataURL, options: .atomic)
     }
@@ -212,14 +235,15 @@ extension TripStore {
     func startSharing() async throws {
         let api = SyncAccount.shared.api
         do {
-            _ = try await api.createTrip(id: id, title: title, legs: legs)
+            _ = try await api.createTrip(id: id, title: title, legs: legs, stays: stays)
         } catch APIError.http(409, _) {
             // Already on the server (shared before, then this phone lost sync.json): fine if we are a member.
             _ = try await api.trip(id)
         }
         var state = SyncState()
-        // Re-sending a leg uploads the files it points to.
+        // Re-sending a leg or stay uploads the files it points to.
         state.pending = legs.filter { !$0.attachments.isEmpty }.map { QueuedOp(op: .upsert($0)) }
+            + stays.filter { !$0.attachments.isEmpty }.map { QueuedOp(op: .upsertStay($0)) }
         syncState = state
         saveSync()
         await sync()
@@ -271,6 +295,11 @@ extension TripStore {
             syncError = nil
             lastSynced = .now
         } catch APIError.forbidden, APIError.notFound {
+            // Make sure the trip itself is gone, not just one route (an older server has no stays).
+            if (try? await api.trip(id)) != nil {
+                syncError = "Il server non accetta questa modifica: aggiornalo. Resta in attesa sul telefono."
+                return
+            }
             stopSharing()
             syncError = "Non fai più parte di questo viaggio condiviso. La copia sul telefono resta."
         } catch APIError.offline {
@@ -287,15 +316,24 @@ extension TripStore {
         case .delete(let legID):
             try await api.deleteLeg(id, legID)
         case .upsert(let leg):
-            // Files first, so friends never see a ticket they cannot open.
-            for a in leg.attachments where syncState?.uploaded.contains(a.storedName) == false {
-                let file = url(for: a)
-                guard FileManager.default.fileExists(atPath: file.path) else { continue }
-                try await api.upload(id, name: a.storedName, from: file)
-                syncState?.uploaded.insert(a.storedName)
-                saveSync()
-            }
+            try await uploadFiles(leg.attachments, api)
             try await api.putLeg(id, leg)
+        case .deleteStay(let stayID):
+            try await api.deleteStay(id, stayID)
+        case .upsertStay(let stay):
+            try await uploadFiles(stay.attachments, api)
+            try await api.putStay(id, stay)
+        }
+    }
+
+    /// Files go up before the leg or stay that points to them, so friends never see a ticket they cannot open.
+    private func uploadFiles(_ attachments: [Attachment], _ api: API) async throws {
+        for a in attachments where syncState?.uploaded.contains(a.storedName) == false {
+            let file = url(for: a)
+            guard FileManager.default.fileExists(atPath: file.path) else { continue }
+            try await api.upload(id, name: a.storedName, from: file)
+            syncState?.uploaded.insert(a.storedName)
+            saveSync()
         }
     }
 
@@ -303,33 +341,40 @@ extension TripStore {
     private func apply(_ remote: RemoteTrip) {
         guard var state = syncState else { return }
         var merged = Dictionary(remote.legs.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
+        var mergedStays = Dictionary(remote.stays.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
         var newTitle = remote.title
         for q in state.pending {
             switch q.op {
             case .upsert(let l): merged[l.id] = l
             case .delete(let legID): merged[legID] = nil
+            case .upsertStay(let s): mergedStays[s.id] = s
+            case .deleteStay(let stayID): mergedStays[stayID] = nil
             case .title(let t): newTitle = t
             }
         }
-        for a in remote.legs.flatMap(\.attachments) { state.uploaded.insert(a.storedName) }
+        for a in remote.legs.flatMap(\.attachments) + remote.stays.flatMap(\.attachments) {
+            state.uploaded.insert(a.storedName)
+        }
         state.members = remote.members
         state.version = remote.version
         syncState = state
         saveSync()
 
         let newLegs = merged.values.sorted { $0.departure < $1.departure }
-        guard newLegs != legs || newTitle != title else { return }
-        // Files a friend removed. Files only an open editor knows about are not in `legs`, so they stay.
-        let kept = Set(newLegs.flatMap(\.attachments).map(\.storedName))
-        removeFiles(legs.flatMap(\.attachments).filter { !kept.contains($0.storedName) })
+        let newStays = mergedStays.values.sorted { $0.checkIn < $1.checkIn }
+        guard newLegs != legs || newStays != stays || newTitle != title else { return }
+        // Files a friend removed. Files only an open editor knows about are not in the trip yet, so they stay.
+        let kept = Set((newLegs.flatMap(\.attachments) + newStays.flatMap(\.attachments)).map(\.storedName))
+        removeFiles(allAttachments.filter { !kept.contains($0.storedName) })
         title = newTitle
         legs = newLegs
+        stays = newStays
         rebuildGeometry()
         save()
     }
 
     private func downloadMissingFiles(_ api: API) async {
-        let missing = legs.flatMap(\.attachments).filter { !FileManager.default.fileExists(atPath: url(for: $0).path) }
+        let missing = allAttachments.filter { !FileManager.default.fileExists(atPath: url(for: $0).path) }
         for a in missing {
             guard let tmp = try? await api.download(id, name: a.storedName) else { continue }
             let dest = url(for: a)
@@ -347,12 +392,14 @@ extension TripStore {
         scheduleSync()
     }
 
-    /// After replacing every leg (import from file), tell the server about each change.
-    private func enqueueReplacement(of old: [Leg]) {
+    /// After replacing everything (import from file), tell the server about each change.
+    private func enqueueReplacement(of old: ([Leg], [Stay])) {
         guard isShared else { return }
-        let keep = Set(legs.map(\.id))
-        for leg in old where !keep.contains(leg.id) { enqueue(.delete(leg.id)) }
+        let keepLegs = Set(legs.map(\.id)), keepStays = Set(stays.map(\.id))
+        for leg in old.0 where !keepLegs.contains(leg.id) { enqueue(.delete(leg.id)) }
+        for stay in old.1 where !keepStays.contains(stay.id) { enqueue(.deleteStay(stay.id)) }
         for leg in legs { enqueue(.upsert(leg)) }
+        for stay in stays { enqueue(.upsertStay(stay)) }
         enqueue(.title(title))
     }
 

@@ -6,7 +6,12 @@ struct EditorRequest: Identifiable {
     let leg: Leg?
 }
 
-/// The persistent bottom sheet: timeline at the root, leg details pushed on top.
+struct StayEditorRequest: Identifiable {
+    let id = UUID()
+    let stay: Stay?
+}
+
+/// The persistent bottom sheet: timeline at the root, leg and stay details pushed on top.
 struct TripSheet: View {
     let store: TripStore
     @Binding var path: [UUID]
@@ -15,6 +20,7 @@ struct TripSheet: View {
     let onClose: () -> Void
 
     @State private var editor: EditorRequest?
+    @State private var stayEditor: StayEditorRequest?
     @State private var showSettings = false
     @State private var importing = false
     @State private var pendingPackage: TripPackage?
@@ -25,15 +31,24 @@ struct TripSheet: View {
 
     var body: some View {
         NavigationStack(path: $path) {
-            TimelineScreen(store: store, onAdd: addLeg, onOpen: { path = [$0] }, onPeople: { showPeople = true })
+            TimelineScreen(store: store, onAdd: addLeg, onAddStay: addStay, onOpen: { path = [$0] }, onPeople: { showPeople = true })
                 .toolbar { toolbar }
                 .navigationDestination(for: UUID.self) { id in
-                    LegDetailView(store: store, legID: id, onEdit: { editor = EditorRequest(leg: $0) })
+                    if store.stay(id) != nil {
+                        StayDetailView(store: store, stayID: id, onEdit: { stayEditor = StayEditorRequest(stay: $0) })
+                    } else {
+                        LegDetailView(store: store, legID: id, onEdit: { editor = EditorRequest(leg: $0) })
+                    }
                 }
         }
         .tint(Theme.text)
         .sheet(item: $editor) { req in
             LegEditorView(store: store, original: req.leg, suggestedFrom: store.legs.last?.to) { deleted in
+                if deleted { path = [] }
+            }
+        }
+        .sheet(item: $stayEditor) { req in
+            StayEditorView(store: store, original: req.stay) { deleted in
                 if deleted { path = [] }
             }
         }
@@ -58,7 +73,7 @@ struct TripSheet: View {
                 pendingPackage = nil
             }
         } message: {
-            Text("Tutte le tratte e i file attuali verranno sostituiti da quelli importati.")
+            Text("Tutte le tratte, gli alloggi e i file attuali verranno sostituiti da quelli importati.")
         }
         .sheet(isPresented: $showSettings) { SettingsView() }
         .sheet(isPresented: $showPeople) { ShareTripView(store: store) }
@@ -83,7 +98,7 @@ struct TripSheet: View {
                     Label(store.isShared ? "Partecipanti" : "Invita amici", systemImage: "person.badge.plus")
                 }
                 ShareLink(
-                    item: TripExport(title: store.title, legs: store.legs, attachmentsDir: store.attachmentsDir),
+                    item: TripExport(title: store.title, legs: store.legs, stays: store.stays, attachmentsDir: store.attachmentsDir),
                     preview: SharePreview(store.title)
                 ) {
                     Label("Esporta come file", systemImage: "square.and.arrow.up")
@@ -105,15 +120,24 @@ struct TripSheet: View {
             .accessibilityLabel(store.isShared ? "Partecipanti" : "Invita amici")
         }
         ToolbarItem(placement: .topBarTrailing) {
-            Button(action: addLeg) {
+            Menu {
+                Button(action: addLeg) { Label("Tratta", systemImage: "point.topleft.down.to.point.bottomright.curvepath") }
+                Button(action: addStay) { Label("Alloggio", systemImage: Stay.symbol) }
+            } label: {
                 Image(systemName: "plus")
                     .font(.system(size: 16, weight: .semibold))
             }
+            .accessibilityLabel("Aggiungi")
         }
     }
 
     private func addLeg() {
         editor = EditorRequest(leg: nil)
+        detent = .large
+    }
+
+    private func addStay() {
+        stayEditor = StayEditorRequest(stay: nil)
         detent = .large
     }
 }
@@ -123,15 +147,16 @@ struct TripSheet: View {
 nonisolated struct TripExport: Transferable {
     let title: String
     let legs: [Leg]
+    let stays: [Stay]
     let attachmentsDir: URL
 
     static var transferRepresentation: some TransferRepresentation {
         FileRepresentation(exportedContentType: .json) { export in
             var files: [String: Data] = [:]
-            for a in export.legs.flatMap(\.attachments) {
+            for a in export.legs.flatMap(\.attachments) + export.stays.flatMap(\.attachments) {
                 files[a.storedName] = try? Data(contentsOf: export.attachmentsDir.appendingPathComponent(a.storedName))
             }
-            let package = TripPackage(title: export.title, legs: export.legs, files: files)
+            let package = TripPackage(title: export.title, legs: export.legs, stays: export.stays, files: files)
             let url = FileManager.default.temporaryDirectory.appendingPathComponent("Viaggio.json")
             try JSONEncoder().encode(package).write(to: url, options: .atomic)
             return SentTransferredFile(url)
@@ -144,25 +169,36 @@ nonisolated struct TripExport: Transferable {
 struct TimelineScreen: View {
     let store: TripStore
     let onAdd: () -> Void
+    let onAddStay: () -> Void
     let onOpen: (UUID) -> Void
     let onPeople: () -> Void
+
+    /// A row of the timeline: a leg, or a stay shown on its check-in day.
+    private enum Item: Identifiable {
+        case leg(Leg)
+        case stay(Stay)
+
+        var id: UUID { switch self { case .leg(let l): l.id; case .stay(let s): s.id } }
+        var date: Date { switch self { case .leg(let l): l.departure; case .stay(let s): s.checkIn } }
+        var timeZone: TimeZone { switch self { case .leg(let l): l.from.timeZone; case .stay(let s): s.timeZone } }
+    }
 
     private struct DayGroup: Identifiable {
         let id: String
         let label: String
-        let legs: [Leg]
+        let items: [Item]
     }
 
     private var groups: [DayGroup] {
+        let items = (store.legs.map(Item.leg) + store.stays.map(Item.stay)).sorted { $0.date < $1.date }
         var order: [String] = []
-        var map: [String: (String, [Leg])] = [:]
-        for leg in store.legs {
-            let tz = leg.from.timeZone
-            let key = Fmt.dayKey(leg.departure, tz)
-            if map[key] == nil { order.append(key); map[key] = (Fmt.day(leg.departure, tz), []) }
-            map[key]?.1.append(leg)
+        var map: [String: (String, [Item])] = [:]
+        for item in items {
+            let key = Fmt.dayKey(item.date, item.timeZone)
+            if map[key] == nil { order.append(key); map[key] = (Fmt.day(item.date, item.timeZone), []) }
+            map[key]?.1.append(item)
         }
-        return order.map { DayGroup(id: $0, label: map[$0]!.0, legs: map[$0]!.1) }
+        return order.map { DayGroup(id: $0, label: map[$0]!.0, items: map[$0]!.1) }
     }
 
     var body: some View {
@@ -187,11 +223,13 @@ struct TimelineScreen: View {
                     .buttonStyle(.plain)
                 }
 
-                if store.legs.isEmpty {
-                    EmptyState(onAdd: onAdd)
+                if store.legs.isEmpty && store.stays.isEmpty {
+                    EmptyState(onAdd: onAdd, onAddStay: onAddStay)
                 } else {
                     TimelineView(.periodic(from: .now, by: 60)) { ctx in
-                        if let next = store.currentOrNext(now: ctx.date) {
+                        if store.legs.isEmpty {
+                            EmptyView()
+                        } else if let next = store.currentOrNext(now: ctx.date) {
                             NextLegCard(leg: next, now: ctx.date)
                                 .onTapGesture { onOpen(next.id) }
                         } else {
@@ -207,10 +245,15 @@ struct TimelineScreen: View {
                         SectionLabel(group.label)
                             .padding(.top, 14)
                         VStack(spacing: 0) {
-                            ForEach(Array(group.legs.enumerated()), id: \.element.id) { index, leg in
+                            ForEach(Array(group.items.enumerated()), id: \.element.id) { index, item in
                                 if index > 0 { Divider().overlay(Theme.hairline).padding(.leading, 60) }
-                                Button { onOpen(leg.id) } label: { LegRow(leg: leg) }
-                                    .buttonStyle(RowPressStyle())
+                                Button { onOpen(item.id) } label: {
+                                    switch item {
+                                    case .leg(let leg): LegRow(leg: leg)
+                                    case .stay(let stay): StayRow(stay: stay)
+                                    }
+                                }
+                                .buttonStyle(RowPressStyle())
                             }
                         }
                         .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.Radius.lg, style: .continuous))
@@ -252,6 +295,12 @@ struct LegRow: View {
                     .monospacedDigit()
             }
             Spacer(minLength: 0)
+            if leg.sleepsOnBoard {
+                Image(systemName: "moon.zzz.fill")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Theme.text)
+                    .accessibilityLabel("Notte a bordo")
+            }
             if !leg.attachments.isEmpty {
                 Image(systemName: "paperclip")
                     .font(.system(size: 13, weight: .semibold))
@@ -314,18 +363,21 @@ struct NextLegCard: View {
 
 struct EmptyState: View {
     let onAdd: () -> Void
+    let onAddStay: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Nessuna tratta")
                 .font(.display(22))
                 .foregroundStyle(Theme.text)
-            Text("Aggiungi voli, treni, bus e traghetti con orari, biglietti e link. Tutto resta sul telefono e funziona anche offline.")
+            Text("Aggiungi voli, treni, bus e traghetti con orari, biglietti e link, e dove dormite. Funziona anche offline.")
                 .font(.system(size: 15))
                 .foregroundStyle(Theme.mute)
             Button("Aggiungi tratta", action: onAdd)
                 .buttonStyle(PrimaryPillStyle())
                 .padding(.top, 4)
+            Button(action: onAddStay) { Label("Aggiungi alloggio", systemImage: Stay.symbol) }
+                .buttonStyle(SoftPillStyle())
         }
         .padding(20)
         .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.Radius.lg, style: .continuous))

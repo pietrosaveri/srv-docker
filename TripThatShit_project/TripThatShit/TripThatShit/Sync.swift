@@ -58,16 +58,24 @@ nonisolated enum PendingOp: Codable, Hashable, Sendable {
     case upsert(Leg)
     case delete(UUID)
     case title(String)
+    case upsertStay(Stay)
+    case deleteStay(UUID)
 
-    /// Two ops on the same leg (or both on the title): only the newest needs sending.
-    func supersedes(_ other: PendingOp) -> Bool {
-        switch (self, other) {
-        case (.title, .title): true
-        case let (.upsert(a), .upsert(b)): a.id == b.id
-        case let (.upsert(a), .delete(b)), let (.delete(b), .upsert(a)): a.id == b
-        case let (.delete(a), .delete(b)): a == b
-        default: false
+    /// The leg or stay this op is about (nil for the title).
+    private var target: UUID? {
+        switch self {
+        case .upsert(let l): l.id
+        case .delete(let id), .deleteStay(let id): id
+        case .upsertStay(let s): s.id
+        case .title: nil
         }
+    }
+
+    /// Two ops on the same leg or stay (or both on the title): only the newest needs sending.
+    func supersedes(_ other: PendingOp) -> Bool {
+        if case .title = self, case .title = other { return true }
+        guard let a = target, let b = other.target else { return false }
+        return a == b
     }
 }
 
@@ -98,8 +106,9 @@ nonisolated struct RemoteTrip: Decodable, Sendable {
     var version: Int
     var members: [Member]
     var legs: [Leg]
+    var stays: [Stay]
 
-    private enum CodingKeys: String, CodingKey { case id, title, owner, version, members, legs }
+    private enum CodingKeys: String, CodingKey { case id, title, owner, version, members, legs, stays }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -110,6 +119,7 @@ nonisolated struct RemoteTrip: Decodable, Sendable {
         members = try c.decode([Member].self, forKey: .members)
         // One leg written by a newer app version must not hide the whole trip.
         legs = try c.decode([Lossy<Leg>].self, forKey: .legs).compactMap(\.value)
+        stays = (try c.decodeIfPresent([Lossy<Stay>].self, forKey: .stays) ?? []).compactMap(\.value)
     }
 }
 
@@ -243,9 +253,9 @@ nonisolated struct API: Sendable {
 
     // MARK: Trips
 
-    func createTrip(id: UUID, title: String, legs: [Leg]) async throws -> RemoteTrip {
-        struct Body: Encodable { var title: String; var legs: [Leg] }
-        return try await call("PUT", "api/trips/\(id.uuidString)", json: Body(title: title, legs: legs))
+    func createTrip(id: UUID, title: String, legs: [Leg], stays: [Stay]) async throws -> RemoteTrip {
+        struct Body: Encodable { var title: String; var legs: [Leg]; var stays: [Stay] }
+        return try await call("PUT", "api/trips/\(id.uuidString)", json: Body(title: title, legs: legs, stays: stays))
     }
 
     func trip(_ id: UUID) async throws -> RemoteTrip {
@@ -262,6 +272,14 @@ nonisolated struct API: Sendable {
 
     func deleteLeg(_ id: UUID, _ legID: UUID) async throws {
         _ = try await raw("DELETE", "api/trips/\(id.uuidString)/legs/\(legID.uuidString)")
+    }
+
+    func putStay(_ id: UUID, _ stay: Stay) async throws {
+        _ = try await raw("PUT", "api/trips/\(id.uuidString)/stays/\(stay.id.uuidString)", json: stay)
+    }
+
+    func deleteStay(_ id: UUID, _ stayID: UUID) async throws {
+        _ = try await raw("DELETE", "api/trips/\(id.uuidString)/stays/\(stayID.uuidString)")
     }
 
     func invite(_ id: UUID) async throws -> String {

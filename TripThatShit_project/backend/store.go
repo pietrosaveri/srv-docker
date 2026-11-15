@@ -19,7 +19,7 @@ import (
 //
 //	users.json                    users and their hashed tokens
 //	invites.json                  invite codes
-//	trips/<id>/trip.json          title, members and legs
+//	trips/<id>/trip.json          title, members, legs and stays
 //	trips/<id>/files/<storedName> tickets, PDFs and photos
 
 type User struct {
@@ -42,8 +42,17 @@ type Trip struct {
 	Owner   string                     `json:"owner"`
 	Members []string                   `json:"members"`
 	Legs    map[string]json.RawMessage `json:"legs"`
+	Stays   map[string]json.RawMessage `json:"stays"`
 	Version int64                      `json:"version"`
 	Updated time.Time                  `json:"updated"`
+}
+
+// items returns the legs or stays map; kind is "legs" or "stays".
+func (t *Trip) items(kind string) map[string]json.RawMessage {
+	if kind == "stays" {
+		return t.Stays
+	}
+	return t.Legs
 }
 
 var (
@@ -100,6 +109,9 @@ func openStore(dir string) (*Store, error) {
 		}
 		if t.Legs == nil {
 			t.Legs = map[string]json.RawMessage{}
+		}
+		if t.Stays == nil {
+			t.Stays = map[string]json.RawMessage{}
 		}
 		s.trips[t.ID] = &t
 	}
@@ -180,10 +192,11 @@ type TripView struct {
 	Version int64             `json:"version"`
 	Members []Member          `json:"members"`
 	Legs    []json.RawMessage `json:"legs"`
+	Stays   []json.RawMessage `json:"stays"`
 }
 
 func (s *Store) viewLocked(t *Trip) TripView {
-	v := TripView{ID: t.ID, Title: t.Title, Owner: t.Owner, Version: t.Version, Members: []Member{}, Legs: []json.RawMessage{}}
+	v := TripView{ID: t.ID, Title: t.Title, Owner: t.Owner, Version: t.Version, Members: []Member{}, Legs: []json.RawMessage{}, Stays: []json.RawMessage{}}
 	for _, id := range t.Members {
 		name := "?"
 		if u, ok := s.users[id]; ok {
@@ -193,6 +206,9 @@ func (s *Store) viewLocked(t *Trip) TripView {
 	}
 	for _, l := range t.Legs {
 		v.Legs = append(v.Legs, l)
+	}
+	for _, st := range t.Stays {
+		v.Stays = append(v.Stays, st)
 	}
 	return v
 }
@@ -207,13 +223,13 @@ func (s *Store) IsMember(tripID, userID string) (bool, error) {
 	return slices.Contains(t.Members, userID), nil
 }
 
-func (s *Store) CreateTrip(id, owner, title string, legs map[string]json.RawMessage) (TripView, error) {
+func (s *Store) CreateTrip(id, owner, title string, legs, stays map[string]json.RawMessage) (TripView, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if _, ok := s.trips[id]; ok {
 		return TripView{}, errExists
 	}
-	t := &Trip{ID: id, Title: title, Owner: owner, Members: []string{owner}, Legs: legs, Version: 1, Updated: time.Now().UTC()}
+	t := &Trip{ID: id, Title: title, Owner: owner, Members: []string{owner}, Legs: legs, Stays: stays, Version: 1, Updated: time.Now().UTC()}
 	if err := os.MkdirAll(s.filesDir(id), 0o755); err != nil {
 		return TripView{}, err
 	}
@@ -253,16 +269,17 @@ func (s *Store) SetTitle(id, title string) (int64, error) {
 	return s.mutate(id, func(t *Trip) { t.Title = title })
 }
 
-func (s *Store) PutLeg(id, legID string, leg json.RawMessage) (int64, error) {
-	v, err := s.mutate(id, func(t *Trip) { t.Legs[legID] = leg })
+// PutItem stores a leg or a stay (kind "legs" or "stays").
+func (s *Store) PutItem(id, kind, itemID string, item json.RawMessage) (int64, error) {
+	v, err := s.mutate(id, func(t *Trip) { t.items(kind)[itemID] = item })
 	if err == nil {
 		s.collectFiles(id)
 	}
 	return v, err
 }
 
-func (s *Store) DeleteLeg(id, legID string) (int64, error) {
-	v, err := s.mutate(id, func(t *Trip) { delete(t.Legs, legID) })
+func (s *Store) DeleteItem(id, kind, itemID string) (int64, error) {
+	v, err := s.mutate(id, func(t *Trip) { delete(t.items(kind), itemID) })
 	if err == nil {
 		s.collectFiles(id)
 	}
@@ -348,22 +365,24 @@ func (s *Store) FilePath(tripID, name string) string {
 	return filepath.Join(s.filesDir(tripID), name)
 }
 
-// collectFiles removes files no leg points to any more. Recent files are kept: a phone
+// collectFiles removes files no leg or stay points to any more. Recent files are kept: a phone
 // uploads a ticket just before the leg that references it.
 func (s *Store) collectFiles(tripID string) {
 	s.mu.Lock()
 	t, ok := s.trips[tripID]
 	keep := map[string]bool{}
 	if ok {
-		for _, raw := range t.Legs {
-			var leg struct {
-				Attachments []struct {
-					StoredName string `json:"storedName"`
-				} `json:"attachments"`
-			}
-			if json.Unmarshal(raw, &leg) == nil {
-				for _, a := range leg.Attachments {
-					keep[a.StoredName] = true
+		for _, m := range []map[string]json.RawMessage{t.Legs, t.Stays} {
+			for _, raw := range m {
+				var item struct {
+					Attachments []struct {
+						StoredName string `json:"storedName"`
+					} `json:"attachments"`
+				}
+				if json.Unmarshal(raw, &item) == nil {
+					for _, a := range item.Attachments {
+						keep[a.StoredName] = true
+					}
 				}
 			}
 		}

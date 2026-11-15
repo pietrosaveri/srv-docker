@@ -15,6 +15,8 @@ struct ShareTripView: View {
     @State private var working = false
     @State private var errorText: String?
     @State private var copied = false
+    @State private var renaming = false
+    @State private var newName = ""
 
     init(store: TripStore) { self.store = store }
 
@@ -60,6 +62,13 @@ struct ShareTripView: View {
         .tint(Theme.text)
         .presentationBackground(Theme.canvas)
         .task { await store.sync() }
+        .alert("Il tuo nome", isPresented: $renaming) {
+            TextField("Nome", text: $newName)
+            Button("Salva") { run { try await rename() } }
+            Button("Annulla", role: .cancel) {}
+        } message: {
+            Text("Lo vedono tutti i partecipanti dei tuoi viaggi condivisi.")
+        }
     }
 
     // MARK: Steps
@@ -113,10 +122,23 @@ struct ShareTripView: View {
                     Spacer(minLength: 0)
                     if m.id == account.session?.id {
                         Text("Tu").font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.stone)
+                        Image(systemName: "pencil")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(Theme.text)
+                            .frame(width: 30, height: 30)
+                            .background(Theme.fill, in: Circle())
                     }
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    guard m.id == account.session?.id else { return }
+                    newName = m.name
+                    renaming = true
+                }
+                .accessibilityAddTraits(m.id == account.session?.id ? .isButton : [])
+                .accessibilityHint(m.id == account.session?.id ? "Cambia il tuo nome" : "")
             }
         }
         .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.Radius.lg, style: .continuous))
@@ -181,6 +203,14 @@ struct ShareTripView: View {
             throw APIError.http(403, "Chiave del server errata.")
         }
         try await share()
+    }
+
+    private func rename() async throws {
+        let name = newName.trimmingCharacters(in: .whitespaces)
+        guard !name.isEmpty, name != account.session?.name else { return }
+        try await account.api.rename(name)
+        account.updateName(name)
+        await store.sync() // refresh the member list
     }
 
     private func share() async throws {

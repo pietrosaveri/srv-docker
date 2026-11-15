@@ -2,6 +2,8 @@ import SwiftUI
 import MapKit
 
 enum SheetDetent {
+    /// Almost closed: just the grabber and the toolbar row stay visible, to pull it back up.
+    static let peek = PresentationDetent.height(80)
     static let collapsed = PresentationDetent.height(270)
 }
 
@@ -66,10 +68,26 @@ struct ContentView: View {
                                     size: leg.id == selectedID ? 38 : 30,
                                     dimmed: selectedID != nil && leg.id != selectedID
                                 )
+                                .overlay(alignment: .topTrailing) {
+                                    if leg.sleepsOnBoard { NightDot().offset(x: 5, y: -5) }
+                                }
                                 .contentShape(Circle().inset(by: -8))
                                 .onTapGesture { select(leg.id) }
                             }
                             .annotationTitles(.hidden)
+                        }
+                    }
+
+                    ForEach(store.stays) { stay in
+                        if stay.place.hasCoordinate {
+                            Annotation(stay.title, coordinate: stay.place.coordinate, anchor: .center) {
+                                StayBadge(
+                                    size: stay.id == selectedID ? 38 : 30,
+                                    dimmed: selectedID != nil && stay.id != selectedID
+                                )
+                                .contentShape(Circle().inset(by: -8))
+                                .onTapGesture { select(stay.id) }
+                            }
                         }
                     }
                 }
@@ -115,7 +133,7 @@ struct ContentView: View {
             }
             .sheet(isPresented: $sheetShown, onDismiss: { if leaving { onClose() } }) {
                 TripSheet(store: store, path: $path, detent: $detent, onShowAll: showAll, onClose: close)
-                    .presentationDetents([SheetDetent.collapsed, .medium, .large], selection: $detent)
+                    .presentationDetents([SheetDetent.peek, SheetDetent.collapsed, .medium, .large], selection: $detent)
                     .presentationBackgroundInteraction(.enabled(upThrough: .medium))
                     .presentationBackground(Theme.canvas)
                     .presentationCornerRadius(Theme.Radius.xl)
@@ -147,19 +165,23 @@ struct ContentView: View {
     }
 
     private func bottomInset(height: CGFloat) -> CGFloat {
-        detent == SheetDetent.collapsed ? 270 : (detent == .medium ? height * 0.5 : height * 0.5)
+        switch detent {
+        case SheetDetent.peek: 80
+        case SheetDetent.collapsed: 270
+        default: height * 0.5
+        }
     }
 
     // MARK: Selection
 
     private func select(_ id: UUID) {
         if path.last != id { path = [id] }
-        if detent == SheetDetent.collapsed { detent = .medium }
+        if detent == SheetDetent.collapsed || detent == SheetDetent.peek { detent = .medium }
     }
 
     private func focus(on id: UUID) {
-        guard let g = store.geometry[id] else { return }
-        withAnimation(.snappy(duration: 0.45)) { position = .rect(padded(g.rect)) }
+        guard let r = store.rect(for: id) else { return }
+        withAnimation(.snappy(duration: 0.45)) { position = .rect(padded(r)) }
     }
 
     private func showAll() {
@@ -201,6 +223,18 @@ struct ContentView: View {
     }
 }
 
+/// Small moon on a map badge: we sleep on board this leg.
+struct NightDot: View {
+    var body: some View {
+        Image(systemName: "moon.fill")
+            .font(.system(size: 9, weight: .bold))
+            .foregroundStyle(Theme.onInverse)
+            .frame(width: 18, height: 18)
+            .background(Theme.inverse, in: Circle())
+            .overlay(Circle().stroke(Theme.canvas, lineWidth: 1.5))
+    }
+}
+
 struct MapRoundButton: View {
     let symbol: String
     let action: () -> Void
@@ -211,21 +245,11 @@ struct MapRoundButton: View {
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(Theme.text)
                 .frame(width: 44, height: 44)
-                .background(Theme.canvas.opacity(0.85), in: Circle())
-                .overlay(Circle().stroke(Theme.hairline, lineWidth: 1))
                 .contentShape(Circle())
         }
-        .buttonStyle(PressGrowStyle())
-    }
-}
-
-/// Grows a little while pressed and springs back, like the system toolbar buttons.
-struct PressGrowStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .scaleEffect(configuration.isPressed ? 1.15 : 1)
-            .brightness(configuration.isPressed ? 0.04 : 0)
-            .animation(.spring(response: 0.25, dampingFraction: 0.55), value: configuration.isPressed)
+        .buttonStyle(.plain)
+        // Same interactive Liquid Glass as the toolbar buttons: grows and wobbles under the finger.
+        .glassEffect(.regular.interactive(), in: Circle())
     }
 }
 

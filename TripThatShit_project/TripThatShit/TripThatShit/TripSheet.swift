@@ -295,6 +295,7 @@ struct LegRow: View {
                     .monospacedDigit()
             }
             Spacer(minLength: 0)
+            PaymentIcon(payment: leg.payment)
             if leg.sleepsOnBoard {
                 Image(systemName: "moon.zzz.fill")
                     .font(.system(size: 13, weight: .semibold))

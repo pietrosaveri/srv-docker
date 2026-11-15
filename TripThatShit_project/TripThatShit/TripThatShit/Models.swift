@@ -37,6 +37,41 @@ nonisolated enum TransportMode: String, Codable, CaseIterable, Identifiable, Sen
     @MainActor var color: Color { AppSettings.shared.color(for: self) }
 }
 
+/// Booking state of a leg or a stay. nil means not booked yet (or not tracked).
+nonisolated enum Payment: String, Codable, CaseIterable, Identifiable, Sendable {
+    case paid, reserved
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .paid: "Pagato"
+        case .reserved: "Prenotato, da pagare"
+        }
+    }
+
+    var short: String {
+        switch self {
+        case .paid: "Pagato"
+        case .reserved: "Da pagare"
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .paid: "checkmark.circle.fill"
+        case .reserved: "eurosign.circle.fill"
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .paid: Color(hex: 0x2FB866)
+        case .reserved: Color(hex: 0xEC7E00)
+        }
+    }
+}
+
 nonisolated struct Place: Codable, Hashable, Sendable {
     var name: String
     var latitude: Double
@@ -90,6 +125,8 @@ nonisolated struct Leg: Codable, Hashable, Identifiable, Sendable {
     var attachments: [Attachment] = []
     /// We sleep on board (night train, ferry cabin, night bus or flight). Optional so older files still decode.
     var overnight: Bool?
+    /// Paid, or booked but still to pay. Optional so older files still decode.
+    var payment: Payment?
 
     var sleepsOnBoard: Bool { overnight ?? false }
     var isMappable: Bool { from.hasCoordinate && to.hasCoordinate }
@@ -114,6 +151,7 @@ nonisolated struct Stay: Codable, Hashable, Identifiable, Sendable {
     var notes = ""
     var links: [LinkItem] = []
     var attachments: [Attachment] = []
+    var payment: Payment?
 
     static let symbol = "bed.double.fill"
 

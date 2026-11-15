@@ -69,6 +69,10 @@ struct LegEditorView: View {
                     Text("Treno notte, traghetto con cabina, bus o volo notturno.")
                 }
 
+                Section("Pagamento") {
+                    ForEach(Payment.allCases) { PaymentTickRow(payment: $0, selection: $leg.payment) }
+                }
+
                 Section("Dettagli") {
                     field("Compagnia (es. Elron, FlixBus)", $leg.carrier)
                     field("Numero treno o volo", $leg.number)

@@ -38,6 +38,7 @@ struct StayRow: View {
                     .monospacedDigit()
             }
             Spacer(minLength: 0)
+            PaymentIcon(payment: stay.payment)
             Image(systemName: "moon.zzz.fill")
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(Theme.text)
@@ -122,6 +123,12 @@ struct StayDetailView: View {
                 }
 
                 if hasInfo(stay) { info(stay) }
+
+                SectionLabel("Pagamento").padding(.top, 6)
+                PaymentCard(selection: Binding(
+                    get: { stay.payment },
+                    set: { var updated = stay; updated.payment = $0; store.upsertStay(updated) }
+                ))
 
                 SectionLabel("Prenotazione e file").padding(.top, 6)
                 AttachmentList(store: store, attachments: stay.attachments, onOpen: { preview = store.url(for: $0) })
@@ -285,6 +292,10 @@ struct StayEditorView: View {
                     Text("\(stay.nightsText). Orari nel fuso orario del luogo.")
                 }
                 .environment(\.timeZone, stay.timeZone)
+
+                Section("Pagamento") {
+                    ForEach(Payment.allCases) { PaymentTickRow(payment: $0, selection: $stay.payment) }
+                }
 
                 Section("Prenotazione") {
                     TextField("Codice prenotazione", text: $stay.bookingRef)

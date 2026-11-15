@@ -34,6 +34,12 @@ struct LegDetailView: View {
 
                 if hasInfo(leg) { info(leg) }
 
+                SectionLabel("Pagamento").padding(.top, 6)
+                PaymentCard(selection: Binding(
+                    get: { leg.payment },
+                    set: { var updated = leg; updated.payment = $0; store.upsert(updated) }
+                ))
+
                 SectionLabel("Biglietti e file").padding(.top, 6)
                 AttachmentList(store: store, attachments: leg.attachments, onOpen: { preview = store.url(for: $0) })
                 AttachmentAdder(store: store) { added in

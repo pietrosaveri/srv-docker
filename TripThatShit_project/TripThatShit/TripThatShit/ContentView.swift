@@ -213,8 +213,19 @@ struct MapRoundButton: View {
                 .frame(width: 44, height: 44)
                 .background(Theme.canvas.opacity(0.85), in: Circle())
                 .overlay(Circle().stroke(Theme.hairline, lineWidth: 1))
+                .contentShape(Circle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PressGrowStyle())
+    }
+}
+
+/// Grows a little while pressed and springs back, like the system toolbar buttons.
+struct PressGrowStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 1.15 : 1)
+            .brightness(configuration.isPressed ? 0.04 : 0)
+            .animation(.spring(response: 0.25, dampingFraction: 0.55), value: configuration.isPressed)
     }
 }
 

@@ -159,7 +159,7 @@ struct LegDetailView: View {
                             .frame(width: 36, height: 36)
                             .background(Theme.fill, in: Circle())
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(PressGrowStyle())
                 }
             }
             if !leg.seat.isEmpty { InfoRow(label: "Posto", value: leg.seat) }

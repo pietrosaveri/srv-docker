@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="42%" r="70%">
+      <stop offset="0" stop-color="#1d2026"/>
+      <stop offset="1" stop-color="#000"/>
+    </radialGradient>
+    <linearGradient id="case" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5a60f0"/>
+      <stop offset="1" stop-color="#3a40c4"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+
+  <!-- dashed flight loop behind the suitcase -->
+  <path d="M120 720 C 60 420, 300 170, 560 190 C 820 210, 960 420, 860 560 C 790 660, 650 600, 700 500 C 740 420, 860 440, 900 330"
+        fill="none" stroke="#3D7BFF" stroke-width="16" stroke-linecap="round" stroke-dasharray="4 34" opacity="0.9"/>
+
+  <!-- shadow -->
+  <ellipse cx="512" cy="878" rx="270" ry="34" fill="#000" opacity="0.55"/>
+
+  <g transform="rotate(-7 512 560)">
+    <!-- handle -->
+    <path d="M420 300 v-56 a34 34 0 0 1 34 -34 h116 a34 34 0 0 1 34 34 v56" fill="none" stroke="#191c1f" stroke-width="34" stroke-linecap="round"/>
+    <path d="M420 300 v-56 a34 34 0 0 1 34 -34 h116 a34 34 0 0 1 34 34 v56" fill="none" stroke="#3a3d40" stroke-width="14" stroke-linecap="round"/>
+
+    <!-- stuff escaping the sides: striped sock (left), shirt sleeve (right) -->
+    <g transform="rotate(-28 250 560)">
+      <rect x="120" y="520" width="170" height="64" rx="30" fill="#fff"/>
+      <rect x="150" y="520" width="22" height="64" fill="#E23B4A"/>
+      <rect x="196" y="520" width="22" height="64" fill="#E23B4A"/>
+      <path d="M150 520 L 150 584 L 96 584 Q 60 584 60 552 Q 60 530 86 526 L 120 520 Z" fill="#fff"/>
+      <path d="M60 552 Q 60 584 96 584 L 104 584 L 104 528 Q 68 530 60 552 Z" fill="#E23B4A"/>
+    </g>
+    <path d="M770 470 q 70 -10 110 30 q -20 40 -70 46 q -20 4 -40 -6 z" fill="#2FB866"/>
+    <path d="M846 488 q 16 18 6 40" fill="none" stroke="#1f8a4a" stroke-width="8" stroke-linecap="round"/>
+
+    <!-- body (bulging) -->
+    <path d="M262 340 Q 512 290 762 340 Q 800 560 762 800 Q 512 840 262 800 Q 224 560 262 340 Z" fill="url(#case)"/>
+    <!-- bulging lid seam / strained zipper -->
+    <path d="M250 420 Q 512 380 774 420" fill="none" stroke="#2a2f9c" stroke-width="10"/>
+    <path d="M262 420 Q 512 382 762 420" fill="none" stroke="#c9c9cd" stroke-width="5" stroke-dasharray="10 9"/>
+    <!-- a bit of shirt poking out of the zipper -->
+    <g transform="rotate(14 640 380)">
+      <path d="M590 404 L 600 330 Q 640 318 690 330 L 700 404 L 660 404 L 645 372 L 630 404 Z" fill="#E23B4A" stroke="#191c1f" stroke-width="8" stroke-linejoin="round"/>
+      <rect x="598" y="326" width="94" height="16" rx="6" fill="#fff" stroke="#191c1f" stroke-width="6"/>
+      <circle cx="622" cy="362" r="7" fill="#fff"/><circle cx="668" cy="358" r="7" fill="#fff"/><circle cx="682" cy="388" r="6" fill="#fff"/><circle cx="610" cy="390" r="6" fill="#fff"/>
+    </g>
+
+    <!-- corner guards -->
+    <path d="M262 360 q 0 -18 18 -22 l 30 -5 l -6 40 z" fill="#191c1f"/>
+    <path d="M762 360 q 0 -18 -18 -22 l -30 -5 l 6 40 z" fill="#191c1f"/>
+
+    <!-- face: googly eyes looking in different directions -->
+    <circle cx="430" cy="545" r="74" fill="#fff"/>
+    <circle cx="610" cy="535" r="88" fill="#fff"/>
+    <circle cx="398" cy="575" r="32" fill="#000"/>
+    <circle cx="648" cy="500" r="38" fill="#000"/>
+    <circle cx="388" cy="563" r="9" fill="#fff"/>
+    <circle cx="636" cy="487" r="11" fill="#fff"/>
+    <!-- worried brows -->
+    <path d="M370 455 q 50 -30 108 -6" fill="none" stroke="#191c1f" stroke-width="16" stroke-linecap="round"/>
+    <path d="M548 430 q 60 -36 128 0" fill="none" stroke="#191c1f" stroke-width="16" stroke-linecap="round"/>
+    <!-- wobbly grin + tongue -->
+    <path d="M420 680 q 40 30 80 0 q 40 -30 80 0 q 30 22 60 4" fill="none" stroke="#191c1f" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M500 684 q 10 56 46 52 q 34 -4 26 -56 q -36 -20 -72 4 z" fill="#ff6f8a" stroke="#191c1f" stroke-width="10" stroke-linejoin="round"/>
+    <path d="M538 690 v 30" stroke="#d94a66" stroke-width="6" stroke-linecap="round"/>
+    <!-- sweat drop -->
+    <path d="M735 600 q 22 34 0 52 q -22 -18 0 -52 z" fill="#7fc4ff"/>
+
+    <!-- travel stickers in the transport colours -->
+    <circle cx="320" cy="745" r="34" fill="#3D7BFF" transform="rotate(10 320 745)"/>
+    <path d="M300 748 l 40 -12 l -8 10 l 8 14 z" fill="#fff"/>
+    <rect x="680" y="712" width="66" height="50" rx="12" fill="#ec7e00" transform="rotate(12 713 737)"/>
+    <path d="M694 742 q 19 -14 38 0" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" transform="rotate(12 713 737)"/>
+
+    <!-- wheels -->
+    <circle cx="330" cy="830" r="30" fill="#191c1f"/>
+    <circle cx="330" cy="830" r="12" fill="#5c5e60"/>
+    <circle cx="694" cy="830" r="30" fill="#191c1f"/>
+    <circle cx="694" cy="830" r="12" fill="#5c5e60"/>
+  </g>
+
+  <!-- the plane, finishing its loop, slightly smug -->
+  <g transform="translate(905 300) rotate(22)">
+    <path d="M-10 -60 C 10 -60, 14 -40, 14 -20 L 14 40 L 70 70 L 70 86 L 14 70 L 12 104 L 32 118 L 32 130 L 0 122 L -32 130 L -32 118 L -12 104 L -14 70 L -70 86 L -70 70 L -14 40 L -14 -20 C -14 -40, -10 -60, -10 -60 Z"
+          fill="#fff" transform="scale(0.9)"/>
+  </g>
+</svg>

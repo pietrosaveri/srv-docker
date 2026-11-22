@@ -1,0 +1,59 @@
+# Vampere (GreenOps for SMEs) — https://vampere.duckdns.org
+#
+#   /       static frontend (Vite build), nginx
+#   /api/*  chat assistant (FastAPI, OpenAI). Public: every chat message costs OpenAI tokens.
+#
+# The code is the vampere submodule. Everything is baked into the images at build time:
+# the pipeline runs --offline during the build (no OpenAI calls), the frontend is built
+# from its output. To update:
+#   git -C vampere pull && git -C vampere submodule update --init --recursive
+#   docker compose up -d --build
+#
+# Setup: cp .env.example .env, set OPENAI_API_KEY, then
+#   git submodule update --init --recursive vampere   # also pulls the case data (vampere/data/case)
+#   docker compose up -d --build
+#
+# DNS: vampere.duckdns.org is its own DuckDNS domain (not a subdomain of pietroserver),
+# so "vampere" must be in DUCKDNS_DOMAINS in /etc/duckdns.env on the server.
+
+x-build: &build
+  context: ./vampere
+  dockerfile: ../Dockerfile
+
+services:
+  web:
+    build:
+      <<: *build
+      target: site
+    image: vampere-web:latest
+    container_name: vampere-web
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    labels:
+      caddy: vampere.duckdns.org
+      caddy.reverse_proxy: "{{upstreams 80}}"
+    networks:
+      - homeserver
+
+  api:
+    build:
+      <<: *build
+      target: api
+    image: vampere-api:latest
+    container_name: vampere-api
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      TZ: Europe/Rome
+      OPENAI_API_KEY: ${OPENAI_API_KEY:?set OPENAI_API_KEY in .env}
+    labels:
+      caddy: vampere.duckdns.org
+      caddy.reverse_proxy: "/api/* {{upstreams 8787}}"
+    networks:
+      - homeserver
+
+networks:
+  homeserver:
+    external: true

@@ -1,0 +1,15 @@
+.git
+**/.git
+.venv
+.env
+**/node_modules
+web/dist
+web/public/data/real
+output/**/*.duckdb*
+Animazioni
+Pose_PNG
+design
+Vampire.png
+**/*.blend
+**/*.blend1
+**/__pycache__

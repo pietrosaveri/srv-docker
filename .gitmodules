@@ -10,3 +10,6 @@
 [submodule "LazyLingo"]
 	path = LazyLingo
 	url = https://github.com/pietrosaveri/LazyLingo.git
+[submodule "vampere/vampere"]
+	path = vampere/vampere
+	url = https://github.com/M4tteoo/vampere.git
